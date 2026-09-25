@@ -1,0 +1,5 @@
+{$DOMAIN} {
+	{$TLS_MODE}
+	encode gzip
+	reverse_proxy app:8080
+}

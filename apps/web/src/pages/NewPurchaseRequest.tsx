@@ -46,11 +46,13 @@ export function NewPurchaseRequestPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    // Match typed text again here: it may have been entered before the catalog finished loading.
+    const resolved = lines.map((l) => ({ ...l, itemId: l.itemId || byLabel.get(l.search.trim())?.id || '' }));
     const payload = {
       track: unit?.type === 'store' ? 'store' : 'hq', orgUnitId: unitId, purpose, referenceUrl, requiredDate: requiredDate || undefined,
-      lines: lines.filter((l) => l.itemId || l.qty).map((l) => ({ itemId: l.itemId, qty: Number(l.qty) }))
+      lines: resolved.filter((l) => l.itemId || l.qty).map((l) => ({ itemId: l.itemId, qty: Number(l.qty) }))
     };
-    if (lines.some((l) => l.search && !l.itemId)) { setError(new Error('Pick each item from the list (type to search).')); return; }
+    if (resolved.some((l) => l.search && !l.itemId)) { setError(new Error('Pick each item from the list (type to search).')); return; }
     const check = purchaseRequestInput.safeParse(payload);
     if (!check.success) { setError(new Error(check.error.issues[0]?.message ?? 'Check the form.')); return; }
     setBusy(true);
@@ -108,7 +110,7 @@ export function NewPurchaseRequestPage() {
         </Field>
         {editId && existing.data?.estimatedTotal != null && <div className="sub" style={{ marginBottom: 10 }}>Previous estimated value: {money(existing.data.estimatedTotal)}</div>}
         <div className="flex gap-2 items-center flex-wrap">
-          <button className="btn-primary" type="submit" disabled={busy}>{busy ? 'Submitting…' : editId ? 'Resubmit' : 'Submit request'}</button>
+          <button className="btn-primary" type="submit" disabled={busy || !items.data}>{busy ? 'Submitting…' : !items.data ? 'Loading catalog…' : editId ? 'Resubmit' : 'Submit request'}</button>
           <Link to={editId ? `/requests/${editId}` : '/'} className="btn-ghost">Cancel</Link>
         </div>
         <div style={{ marginTop: 10 }}><ErrorText error={error} /></div>

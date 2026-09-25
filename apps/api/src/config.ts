@@ -31,7 +31,9 @@ const schema = z.object({
 export type Config = z.infer<typeof schema> & { cookieSecure: boolean; allowedDomains: string[] };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const parsed = schema.safeParse(env);
+  // Treat empty variables (e.g. "KEY=" in .env) as not set.
+  const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined && v !== ''));
+  const parsed = schema.safeParse(cleaned);
   if (!parsed.success) {
     throw new Error('Invalid configuration:\n' + parsed.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`).join('\n'));
   }

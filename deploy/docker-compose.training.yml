@@ -1,0 +1,44 @@
+# Training: same app, its own separate database, demo stores/people/transactions.
+# Nothing here ever touches production data. Reset any time: docker compose -f docker-compose.training.yml down -v
+#   docker compose -f docker-compose.training.yml up -d --build   → http://<server>:8081
+name: tube-training
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tube_training
+      POSTGRES_USER: tube
+      POSTGRES_PASSWORD: ${TRAINING_DB_PASSWORD:-training}
+    volumes:
+      - training-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tube -d tube_training"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: ..
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${TRAINING_PORT:-8081}:8080"
+    environment:
+      APP_ENV: training
+      DEV_LOGIN: "1"
+      DATABASE_URL: postgres://tube:${TRAINING_DB_PASSWORD:-training}@db:5432/tube_training
+      PUBLIC_URL: ${TRAINING_PUBLIC_URL:-http://localhost:8081}
+      COOKIE_SECRET: ${TRAINING_COOKIE_SECRET:-}
+      # With Google configured, trainees must sign in with a company account before picking a
+      # demo person (the training database holds the real price list). Strongly recommended
+      # whenever this port is reachable beyond a trusted room.
+      GOOGLE_CLIENT_ID: ${TRAINING_GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${TRAINING_GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_ALLOWED_DOMAINS: ${GOOGLE_ALLOWED_DOMAINS:-tubecafecambodia.com}
+
+volumes:
+  training-db:

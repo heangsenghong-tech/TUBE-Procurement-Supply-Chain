@@ -60,6 +60,20 @@ describe('authentication', () => {
   });
 });
 
+describe('training environment', () => {
+  it('with Google configured, the demo picker stays locked until a company Google sign-in', async () => {
+    const training = await buildApp(loadConfig({ APP_ENV: 'training', DATABASE_URL: TEST_DB_URL, DEV_LOGIN: '1', WEB_DIST: '/nonexistent',
+      GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'secret' } as never), w.db);
+    const opts = (await training.inject({ method: 'GET', url: '/auth/options' })).json();
+    expect(opts.devLogin).toBe(false);
+    expect(opts.devLoginNeedsGoogle).toBe(true);
+    expect((await training.inject({ method: 'GET', url: '/auth/dev-users' })).statusCode).toBe(403);
+    const res = await training.inject({ method: 'POST', url: '/auth/dev-login', headers: { 'x-tube-request': '1' }, payload: { userId: w.people.ceo!.id } });
+    expect(res.statusCode).toBe(403);
+    await training.close();
+  });
+});
+
 describe('Google sign-in claims', () => {
   const cfg = { ...config, allowedDomains: ['tubecafecambodia.com'] };
   const good = { sub: '1', email: 'a@tubecafecambodia.com', email_verified: true, hd: 'tubecafecambodia.com', nonce: 'n', name: 'A' };
