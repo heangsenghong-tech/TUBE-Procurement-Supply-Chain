@@ -1,0 +1,1282 @@
+{
+ "C00001": {
+  "category": "Food",
+  "description": "Mini Crossiant",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0001",
+  "unitPrice": 0.91,
+  "uom": "Pack"
+ },
+ "C00002": {
+  "category": "Food",
+  "description": "Mini Chocolate Tin",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0001",
+  "unitPrice": 1.01,
+  "uom": "Pack"
+ },
+ "C00004": {
+  "category": "Food",
+  "description": "Mini Almond Crossiant",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0001",
+  "unitPrice": 1.05,
+  "uom": "Pack"
+ },
+ "C00005": {
+  "category": "Food",
+  "description": "Mini Raisin Roll",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0001",
+  "unitPrice": 1.05,
+  "uom": "Pack"
+ },
+ "GEN-001": {
+  "category": "Non-food",
+  "description": "Coffee Grinder (Commercial)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 450,
+  "uom": "Pcs"
+ },
+ "GEN-002": {
+  "category": "Non-food",
+  "description": "Espresso Machine (Commercial, 2-Group)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 4500,
+  "uom": "Pcs"
+ },
+ "GEN-003": {
+  "category": "Non-food",
+  "description": "Milk Frothing Pitcher",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 18,
+  "uom": "Pcs"
+ },
+ "GEN-004": {
+  "category": "Non-food",
+  "description": "Digital Kitchen Scale",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 35,
+  "uom": "Pcs"
+ },
+ "GEN-005": {
+  "category": "Non-food",
+  "description": "Blender (Commercial)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 380,
+  "uom": "Pcs"
+ },
+ "GEN-006": {
+  "category": "Non-food",
+  "description": "Ice Maker Machine",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 1200,
+  "uom": "Pcs"
+ },
+ "GEN-007": {
+  "category": "Non-food",
+  "description": "Drinking Glass 12oz",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 2.5,
+  "uom": "Pcs"
+ },
+ "GEN-008": {
+  "category": "Non-food",
+  "description": "Water Glass 8oz",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 1.8,
+  "uom": "Pcs"
+ },
+ "GEN-009": {
+  "category": "Non-food",
+  "description": "Glass Coffee Server/Carafe",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 22,
+  "uom": "Pcs"
+ },
+ "GEN-010": {
+  "category": "Non-food",
+  "description": "Cafe Chair",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 45,
+  "uom": "Pcs"
+ },
+ "GEN-011": {
+  "category": "Non-food",
+  "description": "Cafe Table (2-seater)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 120,
+  "uom": "Pcs"
+ },
+ "GEN-012": {
+  "category": "Non-food",
+  "description": "Bar Stool",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 65,
+  "uom": "Pcs"
+ },
+ "GEN-013": {
+  "category": "Non-food",
+  "description": "Outdoor Table Set",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 280,
+  "uom": "Set"
+ },
+ "GEN-014": {
+  "category": "Non-food",
+  "description": "Storage Shelving Unit",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 150,
+  "uom": "Pcs"
+ },
+ "GEN-015": {
+  "category": "Non-food",
+  "description": "POS Counter Stand",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 380,
+  "uom": "Pcs"
+ },
+ "GEN-016": {
+  "category": "Non-food",
+  "description": "POS Terminal/System",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 650,
+  "uom": "Set"
+ },
+ "GEN-017": {
+  "category": "Non-food",
+  "description": "Receipt Printer",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 120,
+  "uom": "Pcs"
+ },
+ "GEN-018": {
+  "category": "Non-food",
+  "description": "Barcode Scanner",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 85,
+  "uom": "Pcs"
+ },
+ "GEN-019": {
+  "category": "Non-food",
+  "description": "WiFi Router (Commercial Grade)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 150,
+  "uom": "Pcs"
+ },
+ "GEN-020": {
+  "category": "Non-food",
+  "description": "CCTV Camera (Per Unit)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 95,
+  "uom": "Pcs"
+ },
+ "GEN-021": {
+  "category": "Non-food",
+  "description": "Accounting Software License (Annual)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 300,
+  "uom": "License"
+ },
+ "GEN-022": {
+  "category": "Non-food",
+  "description": "POS Software License (Annual)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 600,
+  "uom": "License"
+ },
+ "GEN-023": {
+  "category": "Non-food",
+  "description": "All-Purpose Cleaner",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 4.5,
+  "uom": "Btl"
+ },
+ "GEN-024": {
+  "category": "Non-food",
+  "description": "Glass Cleaner",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 3.8,
+  "uom": "Btl"
+ },
+ "GEN-025": {
+  "category": "Non-food",
+  "description": "Dish Soap (Commercial)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 6,
+  "uom": "Btl"
+ },
+ "GEN-026": {
+  "category": "Non-food",
+  "description": "Floor Mop Set",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 15,
+  "uom": "Set"
+ },
+ "GEN-027": {
+  "category": "Non-food",
+  "description": "Trash Bags (Roll)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 8,
+  "uom": "Roll"
+ },
+ "GEN-028": {
+  "category": "Non-food",
+  "description": "Table Number Stand",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 3.5,
+  "uom": "Pcs"
+ },
+ "GEN-029": {
+  "category": "Non-food",
+  "description": "Menu Board/Display",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 45,
+  "uom": "Pcs"
+ },
+ "GEN-030": {
+  "category": "Non-food",
+  "description": "First Aid Kit",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 25,
+  "uom": "Kit"
+ },
+ "GEN-031": {
+  "category": "Non-food",
+  "description": "Fire Extinguisher",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 40,
+  "uom": "Pcs"
+ },
+ "GEN-032": {
+  "category": "Non-food",
+  "description": "Branded Tote Bag (Premium Gift)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 3.5,
+  "uom": "Pcs"
+ },
+ "GEN-033": {
+  "category": "Non-food",
+  "description": "Branded T-Shirt (Staff/Promo)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 8,
+  "uom": "Pcs"
+ },
+ "GEN-034": {
+  "category": "Non-food",
+  "description": "Branded Mug (Premium Gift)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 4.5,
+  "uom": "Pcs"
+ },
+ "GEN-035": {
+  "category": "Non-food",
+  "description": "Loyalty Card (Printed, per 100)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 12,
+  "uom": "Pack"
+ },
+ "GEN-036": {
+  "category": "Non-food",
+  "description": "Promotional Flyer/Poster (Printed, per 100)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 35,
+  "uom": "Pack"
+ },
+ "GEN-037": {
+  "category": "Non-food",
+  "description": "Branded Umbrella (Premium Gift)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 9,
+  "uom": "Pcs"
+ },
+ "GEN-038": {
+  "category": "Non-food",
+  "description": "Table Tent/Standee (Marketing Display)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 6,
+  "uom": "Pcs"
+ },
+ "GEN-039": {
+  "category": "Food",
+  "description": "Oat Milk",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 4.2,
+  "uom": "L"
+ },
+ "GEN-040": {
+  "category": "Food",
+  "description": "Almond Milk",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 3.8,
+  "uom": "L"
+ },
+ "GEN-041": {
+  "category": "Food",
+  "description": "Brown Sugar Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 8.5,
+  "uom": "Btl"
+ },
+ "GEN-042": {
+  "category": "Food",
+  "description": "Caramel Sauce (Generic)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 7.5,
+  "uom": "Btl"
+ },
+ "GEN-043": {
+  "category": "Food",
+  "description": "Whipped Cream (Canned)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 5.2,
+  "uom": "Can"
+ },
+ "GEN-044": {
+  "category": "Food",
+  "description": "Chocolate Chips",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 6.8,
+  "uom": "Kg"
+ },
+ "GEN-045": {
+  "category": "Food",
+  "description": "Croissant (Frozen, Wholesale)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 0.85,
+  "uom": "Pcs"
+ },
+ "GEN-046": {
+  "category": "Food",
+  "description": "Muffin Mix",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 12,
+  "uom": "Kg"
+ },
+ "GEN-047": {
+  "category": "Non-food",
+  "description": "Staff Uniform Apron (Barista, Alt Style)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 6.5,
+  "uom": "Pcs"
+ },
+ "GEN-048": {
+  "category": "Non-food",
+  "description": "Name Badge (Staff)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 2.5,
+  "uom": "Pcs"
+ },
+ "GEN-049": {
+  "category": "Non-food",
+  "description": "Non-Slip Safety Shoes (Staff)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 22,
+  "uom": "Pair"
+ },
+ "GEN-050": {
+  "category": "Non-food",
+  "description": "Insulated Delivery Bag",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 14,
+  "uom": "Pcs"
+ },
+ "GEN-051": {
+  "category": "Non-food",
+  "description": "Delivery Paper Bag (Branded)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 0.28,
+  "uom": "Pcs"
+ },
+ "GEN-052": {
+  "category": "Non-food",
+  "description": "Card Payment Terminal (POS)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 220,
+  "uom": "Pcs"
+ },
+ "GEN-053": {
+  "category": "Non-food",
+  "description": "Cash Drawer",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 85,
+  "uom": "Pcs"
+ },
+ "GEN-054": {
+  "category": "Non-food",
+  "description": "Illuminated Signage Board (Storefront)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 320,
+  "uom": "Pcs"
+ },
+ "GEN-055": {
+  "category": "Non-food",
+  "description": "Window Decal / Branding Sticker",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 18,
+  "uom": "Pcs"
+ },
+ "GEN-056": {
+  "category": "Non-food",
+  "description": "Air Conditioner (Split Unit, Commercial)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 650,
+  "uom": "Pcs"
+ },
+ "GEN-057": {
+  "category": "Non-food",
+  "description": "Refrigerator Compressor (Spare Part)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 95,
+  "uom": "Pcs"
+ },
+ "GEN-058": {
+  "category": "Non-food",
+  "description": "Display Chiller/Fridge (Countertop)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 480,
+  "uom": "Pcs"
+ },
+ "GEN-059": {
+  "category": "Non-food",
+  "description": "Delivery Platform Integration/Tablet",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 180,
+  "uom": "Pcs"
+ },
+ "GEN-060": {
+  "category": "Non-food",
+  "description": "Loyalty App/CRM Software License (Annual)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 800,
+  "uom": "License"
+ },
+ "GEN-061": {
+  "category": "Non-food",
+  "description": "Staff Training Manual (Printed Set)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 15,
+  "uom": "Set"
+ },
+ "GEN-062": {
+  "category": "Non-food",
+  "description": "Security Alarm System (Per Store)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 250,
+  "uom": "Set"
+ },
+ "GEN-063": {
+  "category": "Non-food",
+  "description": "LED Ceiling Light Fixture",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 25,
+  "uom": "Pcs"
+ },
+ "GEN-064": {
+  "category": "Non-food",
+  "description": "Sound System/Speaker (In-store)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 140,
+  "uom": "Pcs"
+ },
+ "GEN-065": {
+  "category": "Non-food",
+  "description": "Extension Cord/Power Strip",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 8,
+  "uom": "Pcs"
+ },
+ "GEN-066": {
+  "category": "Non-food",
+  "description": "Cordless Drill (Maintenance Tool)",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 65,
+  "uom": "Pcs"
+ },
+ "GEN-067": {
+  "category": "Food",
+  "description": "Vanilla Bean Extract",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 9.5,
+  "uom": "Btl"
+ },
+ "GEN-068": {
+  "category": "Food",
+  "description": "Cinnamon Powder",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 5.5,
+  "uom": "Kg"
+ },
+ "GEN-069": {
+  "category": "Food",
+  "description": "Sandwich Bread (Wholesale)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 1.2,
+  "uom": "Loaf"
+ },
+ "GEN-070": {
+  "category": "Food",
+  "description": "Bottled Still Water (Retail)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 0.3,
+  "uom": "Btl"
+ },
+ "GEN-071": {
+  "category": "Food",
+  "description": "Bottled Sparkling Water (Retail)",
+  "procurementType": "Direct",
+  "supplierCode": "",
+  "unitPrice": 0.75,
+  "uom": "Btl"
+ },
+ "HQ-001": {
+  "category": "Non-food",
+  "description": "Laptop Dell XPS9345",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 1099,
+  "uom": "Pcs"
+ },
+ "HQ-002": {
+  "category": "Non-food",
+  "description": "Connector 200 Type",
+  "procurementType": "Indirect",
+  "supplierCode": "",
+  "unitPrice": 35,
+  "uom": "Pcs"
+ },
+ "HQ-003": {
+  "category": "Non-food",
+  "description": "Customized PC (Clone)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0023",
+  "unitPrice": 1860,
+  "uom": "Pcs"
+ },
+ "HQ-004": {
+  "category": "Non-food",
+  "description": "Monitor Dell 27\" Plus S2725QC",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0023",
+  "unitPrice": 369,
+  "uom": "Pcs"
+ },
+ "HQ-005": {
+  "category": "Non-food",
+  "description": "Kiosk Display",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0024",
+  "unitPrice": 1150,
+  "uom": "Unit"
+ },
+ "HQ-006": {
+  "category": "Non-food",
+  "description": "Kiosk Stand",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0024",
+  "unitPrice": 680,
+  "uom": "Unit"
+ },
+ "HQ-007": {
+  "category": "Non-food",
+  "description": "Print ID Card Matte (7x10.5cm)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0025",
+  "unitPrice": 3.4,
+  "uom": "Unit"
+ },
+ "HQ-008": {
+  "category": "Non-food",
+  "description": "Keyboard B2 Pro (Black)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0026",
+  "unitPrice": 45,
+  "uom": "Unit"
+ },
+ "HQ-009": {
+  "category": "Non-food",
+  "description": "Keyboard M6 Ultra (Black)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0026",
+  "unitPrice": 45,
+  "uom": "Unit"
+ },
+ "I00004": {
+  "category": "Food",
+  "description": "Caramel Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 12.08,
+  "uom": "BTL"
+ },
+ "I000044": {
+  "category": "Food",
+  "description": "Isi Soda Charger 10S",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 6.49,
+  "uom": "PCS"
+ },
+ "I00006": {
+  "category": "Food",
+  "description": "Chocolate Sauce",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0013",
+  "unitPrice": 4.17,
+  "uom": "BTL"
+ },
+ "I00009": {
+  "category": "Food",
+  "description": "Tube Bean",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 9.68,
+  "uom": "KG"
+ },
+ "I00016": {
+  "category": "Food",
+  "description": "Honey Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0013",
+  "unitPrice": 4.21,
+  "uom": "BOX"
+ },
+ "I00017": {
+  "category": "Food",
+  "description": "Lime",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0003",
+  "unitPrice": 0.75,
+  "uom": "Kg"
+ },
+ "I00018": {
+  "category": "Food",
+  "description": "Lychee Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 12.08,
+  "uom": "BTL"
+ },
+ "I00022": {
+  "category": "Food",
+  "description": "Non-Diary Creamer",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 3.34,
+  "uom": "PACK"
+ },
+ "I00023": {
+  "category": "Food",
+  "description": "Passion",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0003",
+  "unitPrice": 1.1,
+  "uom": "Kg"
+ },
+ "I00024": {
+  "category": "Food",
+  "description": "Raspberry Tea Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 12.08,
+  "uom": "BTL"
+ },
+ "I00030": {
+  "category": "Food",
+  "description": "Vanilla Base",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 19.34,
+  "uom": "PACK"
+ },
+ "I00031": {
+  "category": "Food",
+  "description": "Vanilla Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 12.08,
+  "uom": "BTL"
+ },
+ "I00032": {
+  "category": "Food",
+  "description": "White Sugar",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 2.09,
+  "uom": "PCS"
+ },
+ "I00033": {
+  "category": "Food",
+  "description": "Wildberry Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 12.08,
+  "uom": "BTL"
+ },
+ "I00034": {
+  "category": "Food",
+  "description": "Yellow Lemon",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0003",
+  "unitPrice": 3.5,
+  "uom": "Kg"
+ },
+ "I00035": {
+  "category": "Food",
+  "description": "Yogurt Powder",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 19.44,
+  "uom": "PACK"
+ },
+ "I00043": {
+  "category": "Food",
+  "description": "Arabica Bean",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0011",
+  "unitPrice": 11.3,
+  "uom": "Kg"
+ },
+ "I00046": {
+  "category": "Food",
+  "description": "Monin Caramel Sauce",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 29.79,
+  "uom": "BTL"
+ },
+ "I00047": {
+  "category": "Food",
+  "description": "Monin Liquid Concentrate",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 10.24,
+  "uom": "BTL"
+ },
+ "I00048": {
+  "category": "Food",
+  "description": "Davinci Chocolate Sauce",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0008",
+  "unitPrice": 19.69,
+  "uom": "BTL"
+ },
+ "I00050": {
+  "category": "Food",
+  "description": "Andros Chunky Lychee Rose",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0006",
+  "unitPrice": 12.1,
+  "uom": "Pack"
+ },
+ "I00051": {
+  "category": "Food",
+  "description": "Davinci Rose Syrup",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0008",
+  "unitPrice": 8.8,
+  "uom": "BTL"
+ },
+ "I00054": {
+  "category": "Food",
+  "description": "Cream Avoset",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0004",
+  "unitPrice": 4.8,
+  "uom": "Box"
+ },
+ "I00056": {
+  "category": "Food",
+  "description": "Monin Yuzu Fruit Puree",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 22.89,
+  "uom": "BTL"
+ },
+ "I00057": {
+  "category": "Food",
+  "description": "Cream Aero Top Plus",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0004",
+  "unitPrice": 4.41,
+  "uom": "Box"
+ },
+ "I00058": {
+  "category": "Food",
+  "description": "Sweet Coconut",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0002",
+  "unitPrice": 1,
+  "uom": "Pcs"
+ },
+ "I00063": {
+  "category": "Food",
+  "description": "Cream Ice Hot Non-Dairy Creamer",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 1.82,
+  "uom": "BOX"
+ },
+ "I00067": {
+  "category": "Food",
+  "description": "Tube Chocolate Powder",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 5.06,
+  "uom": "PACK"
+ },
+ "I00068": {
+  "category": "Food",
+  "description": "Tube Cocoa Powder",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 1.9,
+  "uom": "PACK"
+ },
+ "I00071": {
+  "category": "Food",
+  "description": "Tube Coffee Evaporated Milk",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 0.79,
+  "uom": "CAN"
+ },
+ "I00073": {
+  "category": "Food",
+  "description": "Tube Green Tea",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 7.21,
+  "uom": "PACK"
+ },
+ "NEW-001": {
+  "category": "Non-food",
+  "description": "Alcohol (Nsf)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0009",
+  "unitPrice": 40,
+  "uom": "Tin"
+ },
+ "NEW-002": {
+  "category": "Non-food",
+  "description": "Apron-Barista",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0022",
+  "unitPrice": 4.5,
+  "uom": "Pcs"
+ },
+ "NEW-003": {
+  "category": "Food",
+  "description": "Best Cows",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0019",
+  "unitPrice": 31,
+  "uom": "CTN"
+ },
+ "NEW-004": {
+  "category": "Non-food",
+  "description": "Chef Hat",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 3,
+  "uom": "BOX"
+ },
+ "NEW-005": {
+  "category": "Food",
+  "description": "Davinci Pum 10Ml",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0008",
+  "unitPrice": 3.95,
+  "uom": "PCS"
+ },
+ "NEW-006": {
+  "category": "Non-food",
+  "description": "Gas 48 Kg",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0015",
+  "unitPrice": 52,
+  "uom": "TIN"
+ },
+ "NEW-007": {
+  "category": "Non-food",
+  "description": "Hand Towel (Ctn/24Pack)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0012",
+  "unitPrice": 1.21,
+  "uom": "Pcs"
+ },
+ "NEW-008": {
+  "category": "Non-food",
+  "description": "Hand Towel (Ctn/24Pack) Vat",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0012",
+  "unitPrice": 1.33,
+  "uom": "Pcs"
+ },
+ "NEW-009": {
+  "category": "Non-food",
+  "description": "Jumbo Roll (Ctn/12Pack)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0012",
+  "unitPrice": 2.08,
+  "uom": "Pcs"
+ },
+ "NEW-010": {
+  "category": "Non-food",
+  "description": "Jumbo Roll (Ctn/12Pack) Vat",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0012",
+  "unitPrice": 2.29,
+  "uom": "Pcs"
+ },
+ "NEW-011": {
+  "category": "Food",
+  "description": "Kirisu Milk 2L",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0018",
+  "unitPrice": 4.4,
+  "uom": "Btl"
+ },
+ "NEW-012": {
+  "category": "Food",
+  "description": "Matcha Powder 200G",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0016",
+  "unitPrice": 11.92,
+  "uom": "Pack"
+ },
+ "NEW-013": {
+  "category": "Food",
+  "description": "Milac Gold Milk",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0017",
+  "unitPrice": 4.4,
+  "uom": "Box"
+ },
+ "NEW-014": {
+  "category": "Food",
+  "description": "Monin Pump Puree-15Ml",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 5.75,
+  "uom": "PCS"
+ },
+ "NEW-015": {
+  "category": "Food",
+  "description": "Monin Pump-10Ml",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 4.6,
+  "uom": "PCS"
+ },
+ "NEW-016": {
+  "category": "Non-food",
+  "description": "Mop Shine Spring Fresh 5L",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0007",
+  "unitPrice": 16.6,
+  "uom": "Btl"
+ },
+ "NEW-017": {
+  "category": "Non-food",
+  "description": "Napkin Logo (Ctn/30Pack)",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0012",
+  "unitPrice": 19,
+  "uom": "Ctn"
+ },
+ "NEW-018": {
+  "category": "Non-food",
+  "description": "Napkin Logo (Ctn/30Pack) Vat",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0012",
+  "unitPrice": 20.9,
+  "uom": "Ctn"
+ },
+ "NEW-019": {
+  "category": "Non-food",
+  "description": "Pants-Barista",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0022",
+  "unitPrice": 12,
+  "uom": "Pcs"
+ },
+ "NEW-020": {
+  "category": "Non-food",
+  "description": "Paper Bags 130x120x230Mm",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0021",
+  "unitPrice": 0.32,
+  "uom": "Pcs"
+ },
+ "NEW-021": {
+  "category": "Non-food",
+  "description": "Paper Bags 225x120x230Mm",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0021",
+  "unitPrice": 0.4,
+  "uom": "Pcs"
+ },
+ "NEW-022": {
+  "category": "Non-food",
+  "description": "Paper Cup 4Oz",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0020",
+  "unitPrice": 0.1,
+  "uom": "Pcs"
+ },
+ "NEW-023": {
+  "category": "Non-food",
+  "description": "Shirt-Barista",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0022",
+  "unitPrice": 15,
+  "uom": "Pcs"
+ },
+ "NEW-024": {
+  "category": "Non-food",
+  "description": "Smart San G-2 5Kg",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0007",
+  "unitPrice": 24.92,
+  "uom": "Btl"
+ },
+ "NEW-025": {
+  "category": "Non-food",
+  "description": "Soup Cup + Lid Cup 390Ml",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 80,
+  "uom": "CTN"
+ },
+ "NEW-026": {
+  "category": "Food",
+  "description": "Th Milk 950Ml",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0017",
+  "unitPrice": 1.76,
+  "uom": "Box"
+ },
+ "NEW-027": {
+  "category": "Food",
+  "description": "Tube Red Tea",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 5.64,
+  "uom": "PACK"
+ },
+ "NEW-028": {
+  "category": "Non-food",
+  "description": "Thermoplan 4C Coffee Cleansing Tab",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 31.26,
+  "uom": "Box"
+ },
+ "O000004": {
+  "category": "Food",
+  "description": "Gas Cream Charger",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 8.15,
+  "uom": "PCS"
+ },
+ "O000005": {
+  "category": "Non-food",
+  "description": "Paper Roll",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0014",
+  "unitPrice": 0.54,
+  "uom": "Roll"
+ },
+ "O000007": {
+  "category": "Non-food",
+  "description": "Thermoplan Coffee Cleansing Tab",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0010",
+  "unitPrice": 36.49,
+  "uom": "Box"
+ },
+ "O000009": {
+  "category": "Non-food",
+  "description": "Kichen Cleaning Soap",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0007",
+  "unitPrice": 29.7,
+  "uom": "Btl"
+ },
+ "O000011": {
+  "category": "Non-food",
+  "description": "Hand Cleaning Soap",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0007",
+  "unitPrice": 19.8,
+  "uom": "Btl"
+ },
+ "O000012": {
+  "category": "Non-food",
+  "description": "Face Mask",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 1.25,
+  "uom": "BOX"
+ },
+ "O000013": {
+  "category": "Non-food",
+  "description": "Plastic Gloove (Black)",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 3,
+  "uom": "BOX"
+ },
+ "O000014": {
+  "category": "Non-food",
+  "description": "Alcohol",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0009",
+  "unitPrice": 40,
+  "uom": "Tin"
+ },
+ "O000015": {
+  "category": "Non-food",
+  "description": "Clean Pro, Hypochiorous",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0007",
+  "unitPrice": 32.67,
+  "uom": "Btl"
+ },
+ "P00004": {
+  "category": "Non-food",
+  "description": "Paper Roll Sticker",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0014",
+  "unitPrice": 1.98,
+  "uom": "Roll"
+ },
+ "P00013": {
+  "category": "Non-food",
+  "description": "Rubbish Plastic Big Size",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 1.32,
+  "uom": "KG"
+ },
+ "P00014": {
+  "category": "Non-food",
+  "description": "Rubbish Plastic Small Size",
+  "procurementType": "Indirect",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 1.32,
+  "uom": "BOX"
+ },
+ "P00028": {
+  "category": "Non-food",
+  "description": "Yellow Hot Straw",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 1.9,
+  "uom": "PACK"
+ },
+ "PC020": {
+  "category": "Non-food",
+  "description": "White Clear Spoon",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 23,
+  "uom": "CTN"
+ },
+ "PC021": {
+  "category": "Non-food",
+  "description": "White Clear Fork",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 23,
+  "uom": "CTN"
+ },
+ "PC026": {
+  "category": "Non-food",
+  "description": "Plastic Sauce 1Oz",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 17.5,
+  "uom": "CTN"
+ },
+ "PC027": {
+  "category": "Non-food",
+  "description": "Plastic Sauce 2Oz",
+  "procurementType": "Direct",
+  "supplierCode": "SUP-0005",
+  "unitPrice": 20,
+  "uom": "CTN"
+ }
+}

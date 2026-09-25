@@ -1,0 +1,2717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tube Procurement & Supply Chain</title>
+<meta name="theme-color" content="#FFCD00">
+<link rel="icon" type="image/png" href="/assets/tube-logo.png">
+<link rel="apple-touch-icon" href="/assets/tube-logo.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  box-sizing:border-box;
+  --ground:#F8F6F1; --card:#FFFFFF; --ink:#1C1E22; --sub:#6B6558; --line:#E7E3D9;
+  --accent:#FFCD00; --accent-ink:#1C1E22; --warn-bg:#FBF0DD; --warn-ink:#7A5300;
+  --ok-bg:#E7F4EE; --ok-ink:#1E7A5F; --bad-ink:#B23B3B;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#15171B; --card:#1D2025; --ink:#F2F1ED; --sub:#9B968A; --line:#2C2F35;
+    --warn-bg:#332A12; --warn-ink:#F2C94C; --ok-bg:#122A22; --ok-ink:#5FD3A8;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#15171B; --card:#1D2025; --ink:#F2F1ED; --sub:#9B968A; --line:#2C2F35;
+  --warn-bg:#332A12; --warn-ink:#F2C94C; --ok-bg:#122A22; --ok-ink:#5FD3A8;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;}
+h1,h2,h3,.num{font-family:'Space Grotesk',system-ui,sans-serif;}
+.wrap{max-width:860px;margin:0 auto;padding:28px 20px 60px 20px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px;scroll-margin-top:16px;}
+input,button,select{font-family:inherit;font-size:14px;}
+input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--ground);color:var(--ink);}
+label{display:block;font-size:12px;color:var(--sub);margin-bottom:5px;}
+button{cursor:pointer;}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;transition:filter .12s,transform .12s;}
+.btn-primary:hover{filter:brightness(0.94);transform:translateY(-1px);}
+.btn-primary:active{filter:brightness(0.88);transform:translateY(0);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;cursor:pointer;transition:background .12s,border-color .12s;}
+.btn-ghost:hover{background:var(--ground);border-color:#C9C2AE;}
+.btn-ghost:active{background:#EFE9D8;}
+.btn-danger{background:none;border:1px solid #E0B3B3;color:var(--bad-ink);border-radius:8px;padding:9px 15px;font-size:12.5px;cursor:pointer;transition:background .12s;}
+.btn-danger:hover{background:#FBEAEA;}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 10px 5px 5px;}
+.whoami-btn{cursor:pointer;font-family:inherit;transition:box-shadow .12s;}
+.whoami-btn:hover{box-shadow:0 2px 8px rgba(28,30,34,0.12);}
+.whoami-popover{display:none;position:fixed;z-index:500;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;width:250px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(28,30,34,0.16);}
+.whoami-popover.open{display:block;}
+.avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--accent);}
+.sub{color:var(--sub);font-size:12px;}
+.banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:18px;}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
+.statcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+.line-row{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;align-items:center;}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;border-radius:10px;padding:2px 8px;}
+.tag-pending{background:var(--warn-bg);color:var(--warn-ink);}
+.tag-awaiting_approval{background:var(--warn-bg);color:var(--warn-ink);}
+.tag-cancelled{background:var(--line);color:var(--sub);}
+.tag-converted{background:var(--ok-bg);color:var(--ok-ink);}
+.pr-block{border-bottom:1px solid var(--line);padding:12px 0;}
+.pr-block:last-child{border-bottom:none;}
+.line-detail{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;}
+.review-block{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+.contrib{font-size:12.5px;color:var(--sub);padding:2px 0;}
+h2{font-size:15px;font-weight:600;margin:0 0 4px 0;}
+.section-note{font-size:12px;color:var(--sub);margin-bottom:14px;}
+.approval-card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+.step-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px;}
+.step-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;}
+.step-done .step-dot{background:var(--ok-ink);}
+.step-current .step-dot{background:var(--accent);color:var(--accent-ink);}
+.step-future .step-dot{background:var(--line);}
+.step-future{color:var(--sub);}
+.report-table{width:100%;min-width:480px;border-collapse:collapse;font-size:12.5px;table-layout:fixed;}
+.report-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.03em;color:var(--sub);border-bottom:1px solid var(--line);padding:6px 8px;overflow:hidden;}
+.report-table td{padding:6px 8px;border-bottom:1px solid var(--line);word-break:break-word;}
+.report-group-row td{font-weight:600;font-size:13px;padding:14px 8px 4px 8px;border-bottom:none;white-space:normal;}
+.price-edit{width:100%;border:1px solid transparent;background:transparent;padding:3px 5px;font-size:12.5px;font-family:inherit;color:var(--ink);border-radius:5px;}
+.price-edit:hover{border-color:var(--line);}
+.price-edit:focus{border-color:var(--accent);outline:none;background:var(--card);}
+.price-edit:disabled{color:var(--sub);}
+.report-group-title{font-weight:600;font-size:13px;margin:14px 0 4px 0;}
+.report-group-title:first-child{margin-top:0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.navbar{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:20px;box-shadow:0 1px 2px rgba(0,0,0,0.04);}
+.navbtn{flex:1;border:none;background:none;color:var(--sub);font-weight:600;font-size:13px;padding:10px 14px;border-radius:10px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:background .15s;}
+.navbtn:hover:not(.active){background:var(--ground);}
+.navbtn.active{background:var(--accent);color:var(--accent-ink);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.statcard{position:relative;overflow:hidden;}
+.jump-card{display:block;width:100%;text-align:left;font-family:inherit;cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.jump-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(28,30,34,0.10);}
+.statcard.c-yellow{background:linear-gradient(160deg,#FFF6D6,var(--card) 70%);}
+.statcard.c-green{background:linear-gradient(160deg,#DFF3E8,var(--card) 70%);}
+.statcard.c-blue{background:linear-gradient(160deg,#E2EEFB,var(--card) 70%);}
+.statcard.c-rose{background:linear-gradient(160deg,#FBE6E2,var(--card) 70%);}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .statcard.c-yellow{background:linear-gradient(160deg,#3A3110,var(--card) 70%);}
+  :root:not([data-theme="light"]) .statcard.c-green{background:linear-gradient(160deg,#12301F,var(--card) 70%);}
+  :root:not([data-theme="light"]) .statcard.c-blue{background:linear-gradient(160deg,#132A3D,var(--card) 70%);}
+  :root:not([data-theme="light"]) .statcard.c-rose{background:linear-gradient(160deg,#3A1D17,var(--card) 70%);}
+}
+.role-badge{font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:var(--ink);color:var(--ground);border-radius:20px;padding:2px 8px;}
+.gate-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px 28px;text-align:center;max-width:420px;margin:24px auto;}
+.member-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;}
+.stage-bar-track{width:100%;height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin:6px 0;}
+.stage-bar-fill{height:100%;background:var(--accent);border-radius:3px;}
+.spend-period.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.test-badge{display:inline-block;background:#8B5CF6;color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.03em;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle;}
+.hero{position:relative;overflow:hidden;border-radius:16px;padding:22px 24px;margin-bottom:20px;background:linear-gradient(120deg,#FFF3C4 0%,#FBE7C6 45%,#F3D9B8 100%);border:1px solid #EAD9A8;}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .hero{background:linear-gradient(120deg,#3A3110 0%,#332818 45%,#2B2015 100%);border-color:#4A3D22;}
+}
+.hero-cup{position:absolute;right:-10px;bottom:-18px;width:150px;height:150px;opacity:0.9;}
+.hero-inner{position:relative;z-index:1;}
+.ws-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.ws-tile{display:flex;flex-direction:column;gap:8px;border:none;border-radius:14px;padding:16px 14px;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink);transition:transform .12s,box-shadow .12s;}
+.ws-tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(28,30,34,0.10);}
+.ws-tile .ws-icon{font-size:22px;}
+.ws-tile .ws-label{font-weight:700;font-size:13px;font-family:'Space Grotesk',sans-serif;}
+.ws-tile .ws-desc{font-size:11px;color:var(--sub);line-height:1.3;}
+@media (max-width:640px){ .ws-tiles{grid-template-columns:1fr 1fr;} }
+.ws-panel{display:none;}
+.ws-panel.ws-panel-active{display:block;animation:ws-land .6s ease;}
+@keyframes ws-land{0%{box-shadow:0 0 0 3px var(--accent);}100%{box-shadow:none;}}
+@media (max-width: 640px){
+  .wrap{padding:18px 14px 50px 14px;}
+  .statgrid{grid-template-columns:1fr;}
+  .summary-stats{grid-template-columns:1fr 1fr !important;}
+  .summary-breakdown{grid-template-columns:1fr !important;}
+  .two-col{grid-template-columns:1fr;}
+  h1{font-size:18px !important;}
+  .card{padding:16px;}
+}
+#printArea{display:none;}
+@page{size:A4 portrait;margin:14mm;}
+@page landscape-page{size:A4 landscape;margin:14mm;}
+.print-landscape{page:landscape-page;}
+@media print{
+  body *{visibility:hidden;}
+  #printArea, #printArea *{visibility:visible;}
+  #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:0;}
+  .no-print{display:none !important;}
+  #printArea tr{break-inside:avoid;page-break-inside:avoid;}
+  #printArea table{break-inside:auto;}
+  #printArea thead{display:table-header-group;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <svg class="hero-cup" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <ellipse cx="75" cy="122" rx="46" ry="9" fill="#1C1E22" opacity="0.10"/>
+      <path d="M40 60 h58 l-7 46 a10 10 0 0 1 -10 8 h-24 a10 10 0 0 1 -10 -8 z" fill="#1C1E22" opacity="0.85"/>
+      <path d="M40 60 h58 l-2 14 h-54 z" fill="#FFCD00"/>
+      <path d="M98 68 q18 -2 16 14 q-2 14 -19 12" fill="none" stroke="#1C1E22" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+      <path d="M56 46 q-6 -9 0 -16" fill="none" stroke="#1C1E22" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+      <path d="M70 42 q-6 -9 0 -16" fill="none" stroke="#1C1E22" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+      <path d="M84 46 q-6 -9 0 -16" fill="none" stroke="#1C1E22" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+    </svg>
+    <div class="hero-inner row" style="margin-bottom:0;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <img src="/assets/tube-logo.png" alt="Tube Coffee" style="width:52px;height:52px;">
+        <div>
+          <h1 style="margin:0;font-size:20px;font-weight:700;">Tube Procurement &amp; Supply Chain</h1>
+          <div class="sub">Tube Cafe Co., Ltd. &middot; PR &rarr; review &rarr; PO</div>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <button type="button" id="whoami" class="chip whoami-btn">
+          <div class="avatar"></div>
+          <span class="sub" style="font-size:12px;">Loading…</span>
+        </button>
+        <div id="whoamiPopover" class="whoami-popover"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="banner"></div>
+
+  <div class="navbar">
+    <button type="button" class="navbtn active" id="navHome">Submit &amp; Track</button>
+    <button type="button" class="navbtn" id="navProc">Procurement Workspace</button>
+  </div>
+
+  <div id="tab-home" class="tab-panel active">
+
+  <div class="card">
+    <h2>Dashboard</h2>
+    <div class="section-note">Live, current-state numbers &mdash; not tied to a specific month. For a given period, see Monthly Summary in the Procurement Workspace.</div>
+    <div class="statgrid" style="grid-template-columns:repeat(4,1fr);">
+      <button type="button" class="statcard c-yellow jump-card" data-jump="proc:sec-items"><div class="sub">TOTAL SKUs</div><div class="num" id="statSkus" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-yellow jump-card" data-jump="proc:sec-items"><div class="sub">ACTIVE SKUs</div><div class="num" id="statActiveSkus" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-blue jump-card" data-jump="proc:sec-items"><div class="sub">TOTAL SUPPLIERS</div><div class="num" id="statTotalSup" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-blue jump-card" data-jump="proc:sec-items"><div class="sub">ACTIVE SUPPLIERS</div><div class="num" id="statActiveSup" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-blue jump-card" data-jump="home:storeBreakdown"><div class="sub">STORES/DEPTS ACTIVE</div><div class="num" id="statActiveStores" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-green jump-card" data-jump="proc:sec-po"><div class="sub">FULLY COMPLETED</div><div class="num" id="statCompleted" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-yellow jump-card" data-jump="home:sec-approvals"><div class="sub">PR AWAITING APPROVAL</div><div class="num" id="statPending" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-yellow jump-card" data-jump="proc:sec-po"><div class="sub">PO AWAITING APPROVAL</div><div class="num" id="statPOAwaiting" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-yellow jump-card" data-jump="proc:sec-po"><div class="sub">AWAITING DELIVERY</div><div class="num" id="statAwaitingDelivery" style="font-size:26px;font-weight:600;">—</div></button>
+      <button type="button" class="statcard c-rose jump-card" data-jump="home:sec-recent-prs"><div class="sub">CANCELLED (ALL-TIME)</div><div class="num" id="statCancelled" style="font-size:26px;font-weight:600;">—</div></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Spend Summary</h2>
+    <div class="section-note">Total spend by Store vs. HQ, with breakdowns by store/department, item, and supplier.</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button type="button" class="btn-ghost spend-period active" data-period="day">Daily</button>
+      <button type="button" class="btn-ghost spend-period" data-period="week">Weekly</button>
+      <button type="button" class="btn-ghost spend-period" data-period="month">Monthly</button>
+      <button type="button" class="btn-ghost spend-period" data-period="quarter">Quarterly</button>
+      <button type="button" class="btn-ghost spend-period" data-period="semester">Semester</button>
+      <button type="button" class="btn-ghost spend-period" data-period="year">Yearly</button>
+    </div>
+    <div class="two-col" style="margin-bottom:14px;">
+      <div class="statcard c-blue"><div class="sub">STORE SPEND</div><div class="num" id="spendStore" style="font-size:24px;font-weight:600;">—</div></div>
+      <div class="statcard c-yellow"><div class="sub">HQ SPEND</div><div class="num" id="spendHq" style="font-size:24px;font-weight:600;">—</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn-ghost" id="toggleStoreBreakdown">Show breakdown by store/department ▾</button>
+      <button type="button" class="btn-ghost" id="toggleItemBreakdown">Show breakdown by item ▾</button>
+      <button type="button" class="btn-ghost" id="toggleSupplierBreakdown">Show breakdown by supplier ▾</button>
+    </div>
+    <div id="storeBreakdown" style="display:none;margin-top:12px;"></div>
+    <div id="itemBreakdown" style="display:none;margin-top:12px;"></div>
+    <div id="supplierBreakdown" style="display:none;margin-top:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>New Purchase Requisition</h2>
+    <div class="section-note">One PR can list several items. Type to search the item catalog.</div>
+    <button type="button" class="btn-primary" id="openPrForm" style="padding:12px 22px;font-size:14px;">+ Create New PR</button>
+    <form id="prForm" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <label>Request type</label>
+        <div style="display:flex;gap:16px;font-size:13.5px;padding:4px 0;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);"><input type="radio" name="prTrack" value="store" checked style="width:auto;">Store</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);"><input type="radio" name="prTrack" value="hq" style="width:auto;">HQ department</label>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="store" id="storeLabel">Store</label>
+        <input id="store" required maxlength="80" placeholder="e.g. KDT outlet, or CDP outlet">
+      </div>
+      <div id="lineRows"></div>
+      <button type="button" class="btn-ghost" id="addRow" style="margin-bottom:14px;">+ Add item</button>
+      <datalist id="itemsDatalist"></datalist>
+      <div style="margin-bottom:12px;">
+        <label>Purpose / reference / comment (optional)</label>
+        <input id="pr_purpose" maxlength="300" placeholder="Why this is needed, project name, or any note for Procurement">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>Reference image (optional)</label>
+        <input id="pr_image" maxlength="300" placeholder="Paste a Google Drive/Photos link to a photo of the product or project">
+      </div>
+      <div>
+        <button class="btn-primary" type="submit" id="submitBtn">Submit PR</button>
+        <button type="button" class="btn-ghost" id="cancelPrForm" style="margin-left:8px;">Cancel</button>
+        <span id="formMsg" class="sub" style="margin-left:10px;"></span>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" id="sec-approvals">
+    <h2>Approvals</h2>
+    <div class="section-note">Routed by value per the Approval Matrix — Below $100: Petty Cash, no PR needed &middot; $100&ndash;$299: HOD then Finance &middot; $300+: HOD, then Finance, then CEO. Each step needs the step before it done first.</div>
+    <div id="approvalsList" class="sub">Nothing awaiting approval.</div>
+  </div>
+
+  <div class="card" id="sec-recent-prs">
+    <div class="row" style="align-items:flex-start;">
+      <div>
+        <h2>Recent PRs</h2>
+        <div class="section-note" style="margin-bottom:0;">Every submission, with its items and status. Cancel a line or a whole PR while it's still pending.</div>
+      </div>
+      <div class="no-print" style="display:flex;gap:8px;flex-shrink:0;">
+        <button type="button" class="btn-ghost" id="printAllPr">Print All / PDF</button>
+        <button type="button" class="btn-ghost" id="downloadAllPr">Export All as CSV</button>
+      </div>
+    </div>
+    <div id="prList" class="sub" style="margin-top:14px;">No PRs logged yet.</div>
+  </div>
+
+  <div class="card" id="sec-samples">
+    <h2>Sample Request</h2>
+    <div class="section-note">For items or projects you're not yet sure about buying &mdash; get a sample sourced and quoted first, try it, then report back.</div>
+    <button type="button" class="btn-primary" id="openSrForm">+ New Sample Request</button>
+    <form id="srForm" style="display:none;margin-top:14px;">
+      <div style="margin-bottom:12px;">
+        <label>Request type</label>
+        <div style="display:flex;gap:16px;font-size:13.5px;padding:4px 0;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);"><input type="radio" name="srTrack" value="store" checked style="width:auto;">Store</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);"><input type="radio" name="srTrack" value="hq" style="width:auto;">HQ department</label>
+        </div>
+      </div>
+      <div class="two-col" style="margin-bottom:10px;">
+        <div><label id="srStoreLabel">Store</label><input id="sr_store" required placeholder="e.g. KDT outlet, or Marketing"></div>
+        <div><label>Item / Project Name</label><input id="sr_item" required placeholder="e.g. New takeaway cup design"></div>
+        <div style="grid-column:1/-1;"><label>Purpose of usage</label><input id="sr_purpose" required placeholder="Why this is needed"></div>
+        <div><label>Project / timeline (when, for what)</label><input id="sr_timeline" placeholder="e.g. New Year promo, needed by Dec 15"></div>
+        <div><label>Quantity needed (for the project)</label><input id="sr_qty" type="number" min="1" required></div>
+        <div style="grid-column:1/-1;"><label>Place of usage (for fixed-asset / inventory reference)</label><input id="sr_place" placeholder="e.g. All 78 stores, or HQ office only"></div>
+        <div><label>Size</label><input id="sr_size" placeholder="e.g. 12oz, 40x60cm"></div>
+        <div><label>Material</label><input id="sr_material" placeholder="e.g. PP plastic, cotton"></div>
+        <div><label>Color code</label><input id="sr_color" placeholder="e.g. Pantone 109C"></div>
+        <div><label>Reference image (link)</label><input id="sr_image" placeholder="Paste a Google Drive/Photos link"></div>
+      </div>
+      <button class="btn-primary" type="submit" id="srSubmitBtn">Submit Sample Request</button>
+      <button type="button" class="btn-ghost" id="cancelSrForm" style="margin-left:8px;">Cancel</button>
+      <span id="srFormMsg" class="sub" style="margin-left:10px;"></span>
+    </form>
+    <div id="srList" class="sub" style="margin-top:16px;">No sample requests yet.</div>
+  </div>
+
+  </div>
+
+  <div id="tab-proc" class="tab-panel">
+
+  <div id="accessGate" class="gate-card" style="display:none;">
+    <div style="font-size:34px;margin-bottom:10px;">🔒</div>
+    <h2 style="margin-bottom:8px;">Procurement Workspace</h2>
+    <p class="sub" style="margin-bottom:18px;">Item pricing, supplier details, and purchasing tools are restricted to the Procurement &amp; Supply Chain team. Request access and a current member can approve you in.</p>
+    <button type="button" class="btn-primary" id="requestAccessBtn">Request Access</button>
+    <div id="requestAccessMsg" class="sub" style="margin-top:10px;"></div>
+  </div>
+
+  <div id="procContent" style="display:none;">
+
+  <div class="ws-tiles">
+    <button type="button" class="ws-tile statcard c-yellow" data-panel="sec-review"><span class="ws-icon">📋</span><span class="ws-label">Review &amp; Consolidate</span><span class="ws-desc">Group requests by item, adjust qty</span></button>
+    <button type="button" class="ws-tile statcard c-blue" data-panel="sec-qcs"><span class="ws-icon">📊</span><span class="ws-label">Quote Comparison</span><span class="ws-desc">Compare suppliers, pick a winner</span></button>
+    <button type="button" class="ws-tile statcard c-green" data-panel="sec-po"><span class="ws-icon">📄</span><span class="ws-label">Purchase Orders</span><span class="ws-desc">Generated POs, print, deliver</span></button>
+    <button type="button" class="ws-tile statcard c-rose" data-panel="sec-summary"><span class="ws-icon">📈</span><span class="ws-label">Monthly Summary</span><span class="ws-desc">Leadership reporting, savings</span></button>
+    <button type="button" class="ws-tile statcard c-yellow" data-panel="sec-reports"><span class="ws-icon">💰</span><span class="ws-label">Price List</span><span class="ws-desc">Every item, by supplier</span></button>
+    <button type="button" class="ws-tile statcard c-blue" data-panel="sec-items"><span class="ws-icon">🗂️</span><span class="ws-label">Item &amp; Supplier Master</span><span class="ws-desc">Add, edit, bulk upload</span></button>
+    <button type="button" class="ws-tile statcard c-green" data-panel="sec-roles"><span class="ws-icon">🔑</span><span class="ws-label">Approval Roles</span><span class="ws-desc">Who approves what</span></button>
+    <button type="button" class="ws-tile statcard c-rose" data-panel="sec-contracts"><span class="ws-icon">📑</span><span class="ws-label">Contracts</span><span class="ws-desc">Expiry tracking, not documents</span></button>
+  </div>
+  <div id="wsPanelHint" class="sub" style="margin-bottom:16px;">Pick a tile above to open it here.</div>
+  <button type="button" class="btn-ghost" id="wsBackBtn" style="display:none;margin-bottom:16px;">&larr; Back to tiles</button>
+
+  <div class="card">
+    <h2>Team Access</h2>
+    <div class="section-note">Who can see this workspace. Approve a pending request, or remove someone who's changed roles.</div>
+    <div id="pendingAccessList"></div>
+    <div id="memberAccessList" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Export Authorization</h2>
+    <div class="section-note">A narrower list than workspace access. Viewing the Price List, Quote Comparison, and Contracts stays open to the whole workspace &mdash; downloading or printing the full list from them needs separate authorization, since a saved file leaves this system's access control the moment it's on someone's drive.</div>
+    <div id="pendingExportList"></div>
+    <div id="memberExportList" style="margin-top:10px;"></div>
+    <button type="button" class="btn-primary" id="requestExportBtn" style="margin-top:10px;">Request Export Access</button>
+    <div id="requestExportMsg" class="sub" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card ws-panel" id="sec-review">
+    <h2>Purchasing Review &amp; Consolidation</h2>
+    <div class="section-note">Grouped by item across every store. Adjust the quantity before it goes to a PO — this isn't role-locked yet, so treat it as your team's work area for now.</div>
+    <div id="reviewList" class="sub">Nothing pending review.</div>
+  </div>
+
+  <div class="card ws-panel" id="sec-qcs">
+    <div class="row" style="align-items:flex-start;">
+      <div>
+        <h2>Quote Comparison</h2>
+        <div class="section-note" style="margin-bottom:0;">Started from Purchasing Review. Add each supplier's quote, pick the winner, then generate the PO from here — the PR and comparison sheet numbers carry through automatically.</div>
+      </div>
+      <div class="no-print" style="display:flex;gap:8px;flex-shrink:0;">
+        <button type="button" class="btn-ghost" id="printAllQcs">Print All / PDF</button>
+        <button type="button" class="btn-ghost" id="downloadAllQcs">Export All as CSV</button>
+      </div>
+    </div>
+    <div id="qcsList" class="sub" style="margin-top:14px;">No comparison sheets yet.</div>
+  </div>
+
+  <div class="card ws-panel" id="sec-po">
+    <div class="row" style="align-items:flex-start;">
+      <h2 style="margin:0;">Purchase Orders</h2>
+      <div class="no-print" style="display:flex;gap:8px;flex-shrink:0;">
+        <button type="button" class="btn-ghost" id="printAllPo">Print All / PDF</button>
+        <button type="button" class="btn-ghost" id="downloadAllPo">Export All as CSV</button>
+      </div>
+    </div>
+    <div id="poList" class="sub" style="margin-top:14px;">No POs generated yet.</div>
+  </div>
+
+  <div class="card ws-panel" id="sec-summary">
+    <div class="row" style="align-items:flex-start;">
+      <div>
+        <h2>Monthly Summary for Leadership</h2>
+        <div class="section-note" style="margin-bottom:0;">PRs, POs, and spend for the selected month &mdash; the source data for the CEO meeting deck.</div>
+      </div>
+      <div class="no-print" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <input type="month" id="summaryMonth" style="width:auto;">
+        <button type="button" class="btn-ghost" id="printSummary">Print / PDF</button>
+      </div>
+    </div>
+    <div id="monthlySummary" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card ws-panel" id="sec-reports">
+    <div class="row" style="align-items:flex-start;">
+      <div>
+        <h2>Reports</h2>
+        <div class="section-note" style="margin-bottom:0;">Item Master price list, grouped by supplier — for print, saving, or a quick lookup.</div>
+      </div>
+      <div class="no-print" style="display:flex;gap:8px;flex-shrink:0;">
+        <button type="button" class="btn-primary" id="openPriceList">View Price List</button>
+        <button type="button" class="btn-ghost" id="printPriceList" style="display:none;">Print / PDF</button>
+        <button type="button" class="btn-ghost" id="downloadPriceList" style="display:none;">Save as CSV</button>
+        <button type="button" class="btn-ghost" id="hidePriceList" style="display:none;">Hide Price List</button>
+      </div>
+    </div>
+    <div id="priceListWrap" style="display:none;">
+      <input id="priceListSearch" placeholder="Search item, code, or supplier…" style="margin-top:14px;">
+      <div id="priceListReport" style="margin-top:14px;overflow-x:auto;"></div>
+    </div>
+  </div>
+
+  <div class="card ws-panel" id="sec-items">
+    <h2>Manage Items &amp; Suppliers</h2>
+    <div class="section-note">Add a new item or supplier, or pick an existing one to update its details.</div>
+
+    <h3 style="font-size:13px;margin:16px 0 8px 0;">Items</h3>
+    <div style="margin-bottom:10px;">
+      <label for="editItemPick">Select an item to edit</label>
+      <input id="editItemPick" list="itemsDatalist" placeholder="Search item…">
+    </div>
+    <div id="itemEditForm" style="display:none;margin-bottom:16px;padding:12px;background:var(--ground);border-radius:8px;">
+      <div class="two-col" style="margin-bottom:10px;">
+        <div><label>Description</label><input id="ei_desc"></div>
+        <div><label>Category</label>
+          <select id="ei_cat"><option>Food</option><option>Non-food</option></select>
+        </div>
+        <div><label>Procurement Type</label>
+          <select id="ei_ptype"><option>Direct</option><option>Indirect</option></select>
+        </div>
+        <div><label>UOM</label><input id="ei_uom"></div>
+        <div><label>Unit Price</label><input id="ei_price" type="number" step="0.01" min="0"></div>
+        <div style="grid-column:1/-1;"><label>Preferred Supplier</label>
+          <select id="ei_supplier"></select>
+        </div>
+      </div>
+      <button type="button" class="btn-primary" id="ei_save">Save changes</button>
+      <span id="ei_msg" class="sub" style="margin-left:10px;"></span>
+    </div>
+
+    <div style="border-top:1px solid var(--line);padding-top:12px;">
+      <div class="sub" style="margin-bottom:8px;">Add a new item</div>
+      <div class="two-col" style="margin-bottom:10px;">
+        <div><label>Item code</label><input id="ni_code" placeholder="e.g. I00080"></div>
+        <div><label>Description</label><input id="ni_desc"></div>
+        <div><label>Category</label>
+          <select id="ni_cat"><option>Food</option><option>Non-food</option></select>
+        </div>
+        <div><label>Procurement Type</label>
+          <select id="ni_ptype"><option>Direct</option><option>Indirect</option></select>
+        </div>
+        <div><label>UOM</label><input id="ni_uom" placeholder="e.g. Kg, Pcs, Box"></div>
+        <div><label>Unit Price</label><input id="ni_price" type="number" step="0.01" min="0"></div>
+        <div><label>Preferred Supplier</label><select id="ni_supplier"></select></div>
+      </div>
+      <button type="button" class="btn-primary" id="ni_add">Add item</button>
+      <span id="ni_msg" class="sub" style="margin-left:10px;"></span>
+    </div>
+
+    <div style="border-top:1px solid var(--line);padding-top:12px;">
+      <div class="sub" style="margin-bottom:8px;">Bulk upload items from CSV &mdash; columns: Item Code, Description, Category, Type, UOM, Unit Price, Supplier. First row must be the headers (the "Save as CSV" file from Reports above is already in this exact format, so edit that and re-upload it).</div>
+      <input type="file" accept=".csv" id="bulkItemsFile">
+      <div id="bulkItemsPreview" class="sub" style="margin-top:8px;"></div>
+      <button type="button" class="btn-primary" id="bulkItemsConfirm" style="display:none;margin-top:8px;">Import items</button>
+    </div>
+
+    <h3 style="font-size:13px;margin:20px 0 8px 0;">Suppliers</h3>
+    <div style="margin-bottom:10px;">
+      <label for="editSupPick">Select a supplier to edit</label>
+      <input id="editSupPick" list="suppliersDatalist" placeholder="Search supplier…">
+    </div>
+    <datalist id="suppliersDatalist"></datalist>
+    <div id="supEditForm" style="display:none;margin-bottom:16px;padding:12px;background:var(--ground);border-radius:8px;">
+      <div class="two-col" style="margin-bottom:10px;">
+        <div><label>Name</label><input id="es_name"></div>
+        <div><label>Category</label>
+          <select id="es_cat"><option>Food</option><option>Non-food</option><option>Both</option></select>
+        </div>
+        <div><label>Contact</label><input id="es_contact"></div>
+        <div><label>Payment term</label><input id="es_term"></div>
+      </div>
+      <button type="button" class="btn-primary" id="es_save">Save changes</button>
+      <span id="es_msg" class="sub" style="margin-left:10px;"></span>
+    </div>
+
+    <div style="border-top:1px solid var(--line);padding-top:12px;">
+      <div class="sub" style="margin-bottom:8px;">Add a new supplier &mdash; code is assigned automatically</div>
+      <div class="two-col" style="margin-bottom:10px;">
+        <div><label>Name</label><input id="nsup_name"></div>
+        <div><label>Category</label>
+          <select id="nsup_cat"><option>Food</option><option>Non-food</option><option>Both</option></select>
+        </div>
+        <div><label>Contact</label><input id="nsup_contact"></div>
+        <div><label>Payment term</label><input id="nsup_term" placeholder="e.g. 1 MONTH"></div>
+      </div>
+      <button type="button" class="btn-primary" id="nsup_add">Add supplier</button>
+      <span id="nsup_msg" class="sub" style="margin-left:10px;"></span>
+    </div>
+
+    <div style="border-top:1px solid var(--line);padding-top:12px;">
+      <div class="sub" style="margin-bottom:8px;">Bulk upload suppliers from CSV &mdash; columns: Code, Name, Category, Contact, Payment Term. Leave Code blank on new suppliers to auto-assign; matching an existing code updates it instead.</div>
+      <input type="file" accept=".csv" id="bulkSupFile">
+      <div id="bulkSupPreview" class="sub" style="margin-top:8px;"></div>
+      <button type="button" class="btn-primary" id="bulkSupConfirm" style="display:none;margin-top:8px;">Import suppliers</button>
+    </div>
+  </div>
+
+  <div class="card ws-panel" id="sec-roles">
+    <h2>Approval Roles</h2>
+    <div class="section-note">Who each approval step is meant for. Shown next to every step so it's clear who should act &mdash; not yet enforced against sign-in, since that needs everyone on the company organization first.</div>
+    <div class="two-col" style="margin-bottom:14px;">
+      <div><label>Head of Finance / Accounting Manager</label><input id="role_finance" placeholder="name@tubecafecambodia.com"></div>
+      <div><label>CEO</label><input id="role_ceo" placeholder="name@tubecafecambodia.com"></div>
+      <div><label>Head of Supply Chain / Supply Chain Manager</label><input id="role_supplychain" placeholder="name@tubecafecambodia.com"></div>
+    </div>
+    <button type="button" class="btn-primary" id="roles_save">Save roles</button>
+    <span id="roles_msg" class="sub" style="margin-left:10px;"></span>
+
+    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px;">
+      <div class="row" style="margin-bottom:0;">
+        <div>
+          <div class="sub" style="margin-bottom:2px;">Testing Mode</div>
+          <div id="testingModeStatus" style="font-weight:700;font-size:15px;">&mdash;</div>
+        </div>
+        <button type="button" class="btn-danger" id="goLiveBtn">Go Live</button>
+      </div>
+      <div class="section-note" style="margin-top:8px;margin-bottom:0;">While ON, every PR, PO, comparison, and sample request is tagged TEST right where it appears, and left out of every count and total. "Go Live" turns this off for good and clears every test record so real data starts from a clean slate &mdash; there's no way to switch back on after.</div>
+    </div>
+
+    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px;">
+      <div class="sub" style="margin-bottom:8px;">HOD by store/department &mdash; add one row per store as you get them; steps for a store with no HOD set yet just show the role name.</div>
+      <div id="hodRows"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:8px;">
+        <input id="hod_store" placeholder="Store / department, e.g. KDT outlet">
+        <input id="hod_email" placeholder="HOD email">
+        <button type="button" class="btn-ghost" id="hod_add">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ws-panel" id="sec-contracts">
+    <div class="row" style="align-items:flex-start;">
+      <div>
+        <h2>Contract Register</h2>
+        <div class="section-note" style="margin-bottom:0;">Tracks that a contract exists and when it needs renewing &mdash; not the document itself. Keep the signed contract and its full pricing terms wherever your legal/contract files already live, and note the pointer here.</div>
+      </div>
+      <div class="no-print" style="display:flex;gap:8px;flex-shrink:0;">
+        <button type="button" class="btn-ghost" id="printAllContracts">Print All / PDF</button>
+        <button type="button" class="btn-ghost" id="downloadAllContracts">Export All as CSV</button>
+      </div>
+    </div>
+    <div id="contractsList" class="sub" style="margin-bottom:16px;margin-top:14px;">No contracts logged yet.</div>
+    <div style="border-top:1px solid var(--line);padding-top:12px;">
+      <div class="sub" style="margin-bottom:8px;">Add a contract</div>
+      <div class="two-col" style="margin-bottom:10px;">
+        <div><label>Contract name</label><input id="ct_name" placeholder="e.g. The Cake &mdash; Coffee Bean Supply"></div>
+        <div><label>Stage</label>
+          <select id="ct_stage">
+            <option value="draft">Draft</option>
+            <option value="review">Under Review</option>
+            <option value="clause_negotiation">Clause Negotiation</option>
+            <option value="pending_approval">Pending Internal Approval (CEO/Finance)</option>
+            <option value="pending_signature">Pending Supplier Signature</option>
+            <option value="signed">Signed</option>
+            <option value="on_hold">On Hold</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div><label>Supplier</label><select id="ct_supplier"></select></div>
+        <div><label>Start date</label><input id="ct_start" type="date"></div>
+        <div><label>Expiry date</label><input id="ct_expiry" type="date"></div>
+        <div style="grid-column:1/-1;"><label>Key terms summary (not full pricing)</label><input id="ct_terms" placeholder="e.g. 1 month payment term, MOQ 500kg/month"></div>
+        <div style="grid-column:1/-1;"><label>Where the actual document lives</label><input id="ct_pointer" placeholder="e.g. Google Drive &gt; Contracts &gt; TheCake_2026.pdf"></div>
+      </div>
+      <button type="button" class="btn-primary" id="ct_add">Add contract</button>
+      <span id="ct_msg" class="sub" style="margin-left:10px;"></span>
+    </div>
+  </div>
+
+  </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script src="/js/tube-runtime.js"></script>
+<script>
+(async function () {
+  var els = {
+    whoami: document.getElementById('whoami'),
+    banner: document.getElementById('banner'),
+    statSkus: document.getElementById('statSkus'),
+    statActiveSkus: document.getElementById('statActiveSkus'),
+    statTotalSup: document.getElementById('statTotalSup'),
+    statActiveSup: document.getElementById('statActiveSup'),
+    statActiveStores: document.getElementById('statActiveStores'),
+    statCompleted: document.getElementById('statCompleted'),
+    statPending: document.getElementById('statPending'),
+    statPOAwaiting: document.getElementById('statPOAwaiting'),
+    statAwaitingDelivery: document.getElementById('statAwaitingDelivery'),
+    statCancelled: document.getElementById('statCancelled'),
+    lineRows: document.getElementById('lineRows'),
+    addRow: document.getElementById('addRow'),
+    itemsDatalist: document.getElementById('itemsDatalist'),
+    prForm: document.getElementById('prForm'),
+    submitBtn: document.getElementById('submitBtn'),
+    formMsg: document.getElementById('formMsg'),
+    prList: document.getElementById('prList'),
+    approvalsList: document.getElementById('approvalsList'),
+    reviewList: document.getElementById('reviewList'),
+    poList: document.getElementById('poList'),
+    qcsList: document.getElementById('qcsList'),
+    priceListReport: document.getElementById('priceListReport'),
+    priceListWrap: document.getElementById('priceListWrap'),
+    priceListSearch: document.getElementById('priceListSearch'),
+    openPriceList: document.getElementById('openPriceList'),
+    hidePriceList: document.getElementById('hidePriceList'),
+    printAllPr: document.getElementById('printAllPr'),
+    downloadAllPr: document.getElementById('downloadAllPr'),
+    printAllQcs: document.getElementById('printAllQcs'),
+    downloadAllQcs: document.getElementById('downloadAllQcs'),
+    printAllPo: document.getElementById('printAllPo'),
+    downloadAllPo: document.getElementById('downloadAllPo'),
+    monthlySummary: document.getElementById('monthlySummary'),
+    summaryMonth: document.getElementById('summaryMonth'),
+    printArea: document.getElementById('printArea'),
+    printPriceListBtn: document.getElementById('printPriceList'),
+    downloadPriceListBtn: document.getElementById('downloadPriceList'),
+    suppliersDatalist: document.getElementById('suppliersDatalist'),
+    editItemPick: document.getElementById('editItemPick'),
+    itemEditForm: document.getElementById('itemEditForm'),
+    editSupPick: document.getElementById('editSupPick'),
+    supEditForm: document.getElementById('supEditForm'),
+    navHome: document.getElementById('navHome'),
+    navProc: document.getElementById('navProc'),
+    tabHome: document.getElementById('tab-home'),
+    tabProc: document.getElementById('tab-proc'),
+    accessGate: document.getElementById('accessGate'),
+    procContent: document.getElementById('procContent'),
+    requestAccessBtn: document.getElementById('requestAccessBtn'),
+    requestAccessMsg: document.getElementById('requestAccessMsg'),
+    pendingAccessList: document.getElementById('pendingAccessList'),
+    pendingExportList: document.getElementById('pendingExportList'),
+    memberExportList: document.getElementById('memberExportList'),
+    requestExportBtn: document.getElementById('requestExportBtn'),
+    requestExportMsg: document.getElementById('requestExportMsg'),
+    printAllContracts: document.getElementById('printAllContracts'),
+    downloadAllContracts: document.getElementById('downloadAllContracts'),
+    memberAccessList: document.getElementById('memberAccessList'),
+    spendStore: document.getElementById('spendStore'),
+    spendHq: document.getElementById('spendHq'),
+    storeBreakdown: document.getElementById('storeBreakdown'),
+    toggleStoreBreakdown: document.getElementById('toggleStoreBreakdown'),
+    itemBreakdown: document.getElementById('itemBreakdown'),
+    supplierBreakdown: document.getElementById('supplierBreakdown'),
+    toggleItemBreakdown: document.getElementById('toggleItemBreakdown'),
+    toggleSupplierBreakdown: document.getElementById('toggleSupplierBreakdown'),
+    openPrForm: document.getElementById('openPrForm'),
+    cancelPrForm: document.getElementById('cancelPrForm'),
+    openSrForm: document.getElementById('openSrForm'),
+    cancelSrForm: document.getElementById('cancelSrForm'),
+    srForm: document.getElementById('srForm'),
+    srSubmitBtn: document.getElementById('srSubmitBtn'),
+    srFormMsg: document.getElementById('srFormMsg'),
+    srList: document.getElementById('srList'),
+    contractsList: document.getElementById('contractsList')
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function timeAgo(iso) {
+    var diff = Date.now() - new Date(iso).getTime();
+    var m = Math.round(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    var h = Math.round(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.round(h / 24) + 'd ago';
+  }
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
+
+  function approvalStepsForValue(total, kind) {
+    if (total < 100) return { tier: 'petty_cash', steps: [] };
+    if (total < 300) {
+      return kind === 'po'
+        ? { tier: 'tier2', steps: [{ role: 'Head of Supply Chain / Supply Chain Manager', verb: 'Reviewed' }, { role: 'Head of Finance / Accounting Manager', verb: 'Approved' }] }
+        : { tier: 'tier2', steps: [{ role: 'HOD', verb: 'Reviewed/Acknowledged' }, { role: 'Head of Finance / Accounting Manager', verb: 'Approved' }] };
+    }
+    return kind === 'po'
+      ? { tier: 'tier3', steps: [{ role: 'Head of Finance / Accounting Manager', verb: 'Reviewed' }, { role: 'CEO', verb: 'Approved' }] }
+      : { tier: 'tier3', steps: [{ role: 'HOD', verb: 'Reviewed/Acknowledged' }, { role: 'Head of Finance / Accounting Manager', verb: 'Reviewed' }, { role: 'CEO', verb: 'Approved' }] };
+  }
+  function stepsWithState(steps) {
+    return steps.map(function (s) { return Object.assign({ done: false, doneBy: null, doneAt: null }, s); });
+  }
+
+  var db = null, user = null, me = null, downloads = null;
+  try { db = await window.claude.use('db'); } catch (e) {}
+  try { user = await window.claude.use('user'); } catch (e) {}
+  try { downloads = await window.claude.use('downloads'); } catch (e) {}
+  if (user) { try { me = await user.me(); } catch (e) {} }
+
+  if (me && me.id) {
+    els.whoami.innerHTML = '<img class="avatar" src="' + me.avatarUrl + '"><span style="font-size:12.5px;font-weight:600;">' + esc(me.name || 'You') + '</span><span class="role-badge" id="whoamiRole" style="display:none;">Procurement</span>';
+    document.getElementById('whoamiPopover').innerHTML =
+      '<div style="font-weight:600;margin-bottom:4px;">' + esc(me.name || 'You') + '</div>' +
+      '<div class="sub" style="margin-bottom:10px;">' + esc(me.email || '') + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;">' +
+        '<a class="btn-ghost" href="/account" style="text-decoration:none;text-align:center;">Change password</a>' +
+        (me.isAdmin ? '<a class="btn-ghost" href="/admin" style="text-decoration:none;text-align:center;">User administration</a>' : '') +
+        '<button type="button" class="btn-ghost" id="signOutBtn">Sign out</button>' +
+      '</div>';
+    document.getElementById('signOutBtn').addEventListener('click', function () { window.tubeSignOut(); });
+  } else {
+    els.whoami.innerHTML = '<div class="avatar"></div><span class="sub" style="font-size:12px;">Not signed in to this org</span>';
+    document.getElementById('whoamiPopover').innerHTML = '<div>Not signed in. <a href="/login">Sign in</a></div>';
+  }
+  els.whoami.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var pop = document.getElementById('whoamiPopover');
+    var willOpen = !pop.classList.contains('open');
+    if (willOpen) {
+      var r = els.whoami.getBoundingClientRect();
+      var popWidth = 250;
+      var left = Math.min(r.right - popWidth, window.innerWidth - popWidth - 10);
+      left = Math.max(left, 10);
+      pop.style.left = left + 'px';
+      pop.style.top = (r.bottom + 8) + 'px';
+    }
+    pop.classList.toggle('open');
+  });
+  document.addEventListener('click', function (e) {
+    var pop = document.getElementById('whoamiPopover');
+    if (pop.classList.contains('open') && !pop.contains(e.target) && e.target !== els.whoami) pop.classList.remove('open');
+  });
+
+  if (!db) {
+    els.banner.innerHTML = '<div class="banner">Live data isn\'t available in this view.</div>';
+    return;
+  }
+  if (!me || !me.id) {
+    els.banner.innerHTML = '<div class="banner">You\'re not signed in, so submitting and reviewing are turned off. <a href="/login">Sign in</a></div>';
+  }
+  var canWrite = !!(me && me.id);
+  els.submitBtn.disabled = !canWrite;
+  if (!downloads) {
+    els.downloadPriceListBtn.style.display = 'none';
+    els.downloadAllPr.style.display = 'none';
+    els.downloadAllQcs.style.display = 'none';
+    els.downloadAllPo.style.display = 'none';
+  }
+
+  // ---- tabs ----
+  els.navHome.addEventListener('click', function () {
+    els.navHome.classList.add('active'); els.navProc.classList.remove('active');
+    els.tabHome.classList.add('active'); els.tabProc.classList.remove('active');
+  });
+  els.navProc.addEventListener('click', function () {
+    els.navProc.classList.add('active'); els.navHome.classList.remove('active');
+    els.tabProc.classList.add('active'); els.tabHome.classList.remove('active');
+  });
+
+  function showWsPanel(targetId) {
+    document.querySelectorAll('.ws-panel').forEach(function (p) { p.classList.remove('ws-panel-active'); });
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    if (target.classList.contains('ws-panel')) {
+      target.classList.add('ws-panel-active');
+      var hint = document.getElementById('wsPanelHint');
+      if (hint) hint.style.display = 'none';
+      var backBtn = document.getElementById('wsBackBtn');
+      if (backBtn) backBtn.style.display = 'inline-block';
+    }
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.getElementById('wsBackBtn').addEventListener('click', function () {
+    document.querySelectorAll('.ws-panel').forEach(function (p) { p.classList.remove('ws-panel-active'); });
+    document.getElementById('wsPanelHint').style.display = 'block';
+    this.style.display = 'none';
+    document.querySelector('.ws-tiles').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.querySelectorAll('.ws-tile').forEach(function (btn) {
+    btn.addEventListener('click', function () { showWsPanel(btn.getAttribute('data-panel')); });
+  });
+
+  document.querySelectorAll('.jump-card').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var parts = btn.getAttribute('data-jump').split(':');
+      var tab = parts[0], targetId = parts[1];
+      if (tab === 'proc' && !els.navProc.classList.contains('active')) els.navProc.click();
+      if (tab === 'home' && !els.navHome.classList.contains('active')) els.navHome.click();
+      setTimeout(function () {
+        if (targetId === 'storeBreakdown') {
+          var el = document.getElementById(targetId);
+          if (el && el.style.display === 'none') els.toggleStoreBreakdown.click();
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+        showWsPanel(targetId);
+      }, 60);
+    });
+  });
+
+  // ---- procurement workspace access gate ----
+  var procAccess = { members: {}, pending: {} };
+  var procAccessDoc = db.collection('settings').doc('procurement_access');
+  var isProcMember = false;
+  procAccessDoc.onSnapshot(function (snap) {
+    var d = (snap.exists && snap.data()) || {};
+    procAccess = { members: d.members || {}, pending: d.pending || {} };
+    var noMembersYet = Object.keys(procAccess.members).length === 0;
+    isProcMember = !!(me && me.id) && (noMembersYet || !!procAccess.members[me.id]);
+    if (noMembersYet && me && me.id) {
+      try { procAccessDoc.set({ members: (function () { var m = {}; m[me.id] = { name: me.name || 'Someone', addedAt: new Date().toISOString() }; return m; })(), pending: {} }); } catch (e) {}
+    }
+    els.accessGate.style.display = isProcMember ? 'none' : 'block';
+    els.procContent.style.display = isProcMember ? 'block' : 'none';
+    var badge = document.getElementById('whoamiRole');
+    if (badge) badge.style.display = isProcMember ? 'inline-block' : 'none';
+    renderAccessLists();
+  }, function () {});
+
+  els.requestAccessBtn.addEventListener('click', async function () {
+    if (!me || !me.id) return;
+    els.requestAccessBtn.disabled = true;
+    var patch = {}; patch[me.id] = { name: me.name || 'Someone', requestedAt: new Date().toISOString() };
+    try {
+      await procAccessDoc.update({ pending: patch });
+      els.requestAccessMsg.textContent = 'Requested — a current member needs to approve you in.';
+    } catch (e) { els.requestAccessMsg.textContent = 'Could not send the request.'; els.requestAccessBtn.disabled = false; }
+  });
+
+  function renderAccessLists() {
+    var pendingIds = Object.keys(procAccess.pending);
+    els.pendingAccessList.innerHTML = pendingIds.length
+      ? pendingIds.map(function (id) {
+          return '<div class="member-row"><span>' + esc(procAccess.pending[id].name) + ' <span class="sub">requesting access</span></span>' +
+            (isProcMember ? '<button type="button" class="btn-primary acc-approve" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Approve</button>' : '') + '</div>';
+        }).join('')
+      : '<div class="sub">No pending requests.</div>';
+    var memberIds = Object.keys(procAccess.members);
+    els.memberAccessList.innerHTML = '<div class="sub" style="margin-bottom:4px;">Current members</div>' + memberIds.map(function (id) {
+      return '<div class="member-row"><span style="display:flex;align-items:center;gap:6px;">' +
+        '<input class="acc-name-edit" data-id="' + id + '" value="' + esc(procAccess.members[id].name) + '" ' + (isProcMember ? '' : 'disabled') + ' style="width:160px;padding:5px 8px;font-size:13px;">' +
+        (id === (me && me.id) ? '<span class="sub">(you)</span>' : '') + '</span>' +
+        (isProcMember && id !== (me && me.id) ? '<button type="button" class="btn-danger acc-remove" data-id="' + id + '">Remove</button>' : '') + '</div>';
+    }).join('');
+    els.pendingAccessList.querySelectorAll('.acc-approve').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var id = btn.getAttribute('data-id');
+        var newMembers = Object.assign({}, procAccess.members);
+        newMembers[id] = Object.assign({ addedAt: new Date().toISOString() }, procAccess.pending[id]);
+        var newPending = Object.assign({}, procAccess.pending); delete newPending[id];
+        try { await procAccessDoc.set({ members: newMembers, pending: newPending }); } catch (e) {}
+      });
+    });
+    els.memberAccessList.querySelectorAll('.acc-remove').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var id = btn.getAttribute('data-id');
+        var newMembers = Object.assign({}, procAccess.members); delete newMembers[id];
+        try { await procAccessDoc.set({ members: newMembers, pending: procAccess.pending }); } catch (e) {}
+      });
+    });
+    els.memberAccessList.querySelectorAll('.acc-name-edit').forEach(function (inp) {
+      inp.addEventListener('change', async function () {
+        var id = inp.getAttribute('data-id');
+        var newMembers = Object.assign({}, procAccess.members);
+        if (!newMembers[id]) return;
+        newMembers[id] = Object.assign({}, newMembers[id], { name: inp.value.trim() || 'Unnamed' });
+        try { await procAccessDoc.set({ members: newMembers, pending: procAccess.pending }); } catch (e) {}
+      });
+    });
+  }
+
+  // ---- export authorization gate (narrower than workspace access) ----
+  var exportAccess = { members: {}, pending: {} };
+  var exportAccessDoc = db.collection('settings').doc('export_authorization');
+  var isExportAuthorized = false;
+  exportAccessDoc.onSnapshot(function (snap) {
+    var d = (snap.exists && snap.data()) || {};
+    exportAccess = { members: d.members || {}, pending: d.pending || {} };
+    var noneYet = Object.keys(exportAccess.members).length === 0;
+    isExportAuthorized = !!(me && me.id) && (noneYet || !!exportAccess.members[me.id]);
+    if (noneYet && me && me.id) {
+      try { exportAccessDoc.set({ members: (function () { var m = {}; m[me.id] = { name: me.name || 'Someone', addedAt: new Date().toISOString() }; return m; })(), pending: {} }); } catch (e) {}
+    }
+    renderExportLists();
+  }, function () {});
+
+  els.requestExportBtn.addEventListener('click', async function () {
+    if (!me || !me.id) return;
+    els.requestExportBtn.disabled = true;
+    var patch = {}; patch[me.id] = { name: me.name || 'Someone', requestedAt: new Date().toISOString() };
+    try {
+      await exportAccessDoc.update({ pending: patch });
+      els.requestExportMsg.textContent = 'Requested — someone already export-authorized needs to approve you in.';
+    } catch (e) { els.requestExportMsg.textContent = 'Could not send the request.'; els.requestExportBtn.disabled = false; }
+  });
+
+  function renderExportLists() {
+    var pendingIds = Object.keys(exportAccess.pending);
+    els.pendingExportList.innerHTML = pendingIds.length
+      ? pendingIds.map(function (id) {
+          return '<div class="member-row"><span>' + esc(exportAccess.pending[id].name) + ' <span class="sub">requesting export access</span></span>' +
+            (isExportAuthorized ? '<button type="button" class="btn-primary exp-approve" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Approve</button>' : '') + '</div>';
+        }).join('')
+      : '<div class="sub">No pending requests.</div>';
+    var memberIds = Object.keys(exportAccess.members);
+    els.memberExportList.innerHTML = '<div class="sub" style="margin-bottom:4px;">Export-authorized</div>' + (memberIds.length ? memberIds.map(function (id) {
+      return '<div class="member-row"><span style="display:flex;align-items:center;gap:6px;">' +
+        '<input class="exp-name-edit" data-id="' + id + '" value="' + esc(exportAccess.members[id].name) + '" ' + (isExportAuthorized ? '' : 'disabled') + ' style="width:160px;padding:5px 8px;font-size:13px;">' +
+        (id === (me && me.id) ? '<span class="sub">(you)</span>' : '') + '</span>' +
+        (isExportAuthorized && id !== (me && me.id) ? '<button type="button" class="btn-danger exp-remove" data-id="' + id + '">Remove</button>' : '') + '</div>';
+    }).join('') : '<div class="sub">No one yet.</div>');
+    els.requestExportBtn.style.display = isExportAuthorized ? 'none' : 'inline-block';
+    els.pendingExportList.querySelectorAll('.exp-approve').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var id = btn.getAttribute('data-id');
+        var newMembers = Object.assign({}, exportAccess.members);
+        newMembers[id] = Object.assign({ addedAt: new Date().toISOString() }, exportAccess.pending[id]);
+        var newPending = Object.assign({}, exportAccess.pending); delete newPending[id];
+        try { await exportAccessDoc.set({ members: newMembers, pending: newPending }); } catch (e) {}
+      });
+    });
+    els.memberExportList.querySelectorAll('.exp-remove').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var id = btn.getAttribute('data-id');
+        var newMembers = Object.assign({}, exportAccess.members); delete newMembers[id];
+        try { await exportAccessDoc.set({ members: newMembers, pending: exportAccess.pending }); } catch (e) {}
+      });
+    });
+    els.memberExportList.querySelectorAll('.exp-name-edit').forEach(function (inp) {
+      inp.addEventListener('change', async function () {
+        var id = inp.getAttribute('data-id');
+        var newMembers = Object.assign({}, exportAccess.members);
+        if (!newMembers[id]) return;
+        newMembers[id] = Object.assign({}, newMembers[id], { name: inp.value.trim() || 'Unnamed' });
+        try { await exportAccessDoc.set({ members: newMembers, pending: exportAccess.pending }); } catch (e) {}
+      });
+    });
+  }
+  function requireExportAuth() {
+    if (isExportAuthorized) return true;
+    alert('Exporting this list needs export authorization, separate from workspace access. See "Export Authorization" near the top of this tab to request it.');
+    return false;
+  }
+
+  // ---- local live state ----
+  var items = {}, suppliers = {}, headers = {}, lines = {}, pos = {}, qcs = {}, contracts = {}, samples = {};
+  var profileCache = {};
+
+  async function namesFor(ids) {
+    var need = ids.filter(function (id) { return id && !profileCache[id]; });
+    if (need.length && user) {
+      try {
+        var p = await user.profiles(need);
+        need.forEach(function (id) { profileCache[id] = (p[id] && p[id].name) || 'Someone'; });
+      } catch (e) { need.forEach(function (id) { profileCache[id] = 'Someone'; }); }
+    }
+    var out = {};
+    ids.forEach(function (id) { out[id] = profileCache[id] || 'Someone'; });
+    return out;
+  }
+
+  // ---- one row of the New PR form ----
+  function addLineRow() {
+    var row = document.createElement('div');
+    row.className = 'line-row';
+    row.innerHTML =
+      '<input class="line-item" list="itemsDatalist" placeholder="Search item…">' +
+      '<input class="line-qty" type="number" min="1" placeholder="Qty">' +
+      '<button type="button" class="btn-ghost row-remove" style="padding:9px 13px;font-size:15px;line-height:1;">×</button>';
+    row.querySelector('.row-remove').addEventListener('click', function () {
+      if (els.lineRows.children.length > 1) row.remove();
+    });
+    els.lineRows.appendChild(row);
+  }
+  addLineRow();
+  els.addRow.addEventListener('click', addLineRow);
+
+  els.openPrForm.addEventListener('click', function () {
+    els.openPrForm.style.display = 'none';
+    els.prForm.style.display = 'block';
+  });
+  els.cancelPrForm.addEventListener('click', function () {
+    els.prForm.style.display = 'none';
+    els.openPrForm.style.display = 'inline-block';
+  });
+
+  els.openSrForm.addEventListener('click', function () {
+    els.openSrForm.style.display = 'none';
+    els.srForm.style.display = 'block';
+  });
+  els.cancelSrForm.addEventListener('click', function () {
+    els.srForm.style.display = 'none';
+    els.openSrForm.style.display = 'inline-block';
+  });
+  document.querySelectorAll('input[name="srTrack"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      var isStore = document.querySelector('input[name="srTrack"]:checked').value === 'store';
+      document.getElementById('srStoreLabel').textContent = isStore ? 'Store' : 'Department';
+      document.getElementById('sr_store').placeholder = isStore ? 'e.g. KDT outlet, or CDP outlet' : 'e.g. IT, HR, Marketing';
+    });
+  });
+
+  function matchItem(typed) {
+    typed = (typed || '').trim();
+    if (!typed) return null;
+    var dashIdx = typed.indexOf(' — ');
+    var code = dashIdx > -1 ? typed.slice(0, dashIdx).trim() : typed;
+    if (items[code]) return code;
+    var lower = typed.toLowerCase();
+    for (var c in items) {
+      if (items[c].description.toLowerCase() === lower) return c;
+    }
+    return null;
+  }
+
+  // ---- render ----
+  function renderStats() {
+    els.statSkus.textContent = String(Object.keys(items).length);
+    var postPos = Object.values(pos).filter(function (p) { return !isTestRecord(p); });
+    var postHeaders = Object.values(headers).filter(function (h) { return !isTestRecord(h); });
+
+    var usedItems = {};
+    postPos.forEach(function (p) { if (p.itemCode) usedItems[p.itemCode] = true; });
+    els.statActiveSkus.textContent = String(Object.keys(usedItems).length);
+
+    var usedSuppliers = {};
+    postPos.forEach(function (p) { if (p.supplierCode) usedSuppliers[p.supplierCode] = true; });
+    els.statTotalSup.textContent = String(Object.keys(suppliers).length);
+    els.statActiveSup.textContent = String(Object.keys(usedSuppliers).length);
+
+    var activeStores = {};
+    postHeaders.forEach(function (h) { if (h.store) activeStores[h.store.trim().toLowerCase()] = true; });
+    els.statActiveStores.textContent = String(Object.keys(activeStores).length);
+
+    var completed = postPos.filter(function (p) { return p.poStatus === 'approved' && p.delivered; }).length;
+    els.statCompleted.textContent = String(completed);
+
+    var prAwaiting = postHeaders.filter(function (h) { return h.headerStatus === 'awaiting_approval'; }).length;
+    els.statPending.textContent = String(prAwaiting);
+
+    var poAwaiting = postPos.filter(function (p) { return p.poStatus === 'awaiting_approval'; }).length;
+    els.statPOAwaiting.textContent = String(poAwaiting);
+
+    var awaitingDelivery = postPos.filter(function (p) { return p.poStatus === 'approved' && !p.delivered; }).length;
+    els.statAwaitingDelivery.textContent = String(awaitingDelivery);
+
+    var cancelled = postHeaders.filter(function (h) { return h.headerStatus === 'rejected'; }).length +
+      postPos.filter(function (p) { return p.poStatus === 'rejected' || p.poStatus === 'cancelled'; }).length;
+    els.statCancelled.textContent = String(cancelled);
+  }
+
+  function trackForPO(p) {
+    if (p.prNumbers && p.prNumbers.length) {
+      var h = Object.values(headers).filter(function (hh) { return hh.prNumber === p.prNumbers[0]; })[0];
+      if (h && h.track) return h.track;
+    }
+    return 'store';
+  }
+  function periodStart(period) {
+    var now = new Date();
+    var y = now.getUTCFullYear(), m = now.getUTCMonth(), d = now.getUTCDate();
+    if (period === 'day') return new Date(Date.UTC(y, m, d));
+    if (period === 'week') {
+      var dow = now.getUTCDay();
+      var sinceMonday = dow === 0 ? 6 : dow - 1;
+      return new Date(Date.UTC(y, m, d - sinceMonday));
+    }
+    if (period === 'month') return new Date(Date.UTC(y, m, 1));
+    if (period === 'quarter') return new Date(Date.UTC(y, Math.floor(m / 3) * 3, 1));
+    if (period === 'semester') return new Date(Date.UTC(y, m < 6 ? 0 : 6, 1));
+    return new Date(Date.UTC(y, 0, 1));
+  }
+  var spendPeriod = 'day';
+  function renderSpendSummary() {
+    var start = periodStart(spendPeriod);
+    var inPeriod = Object.values(pos).filter(function (p) { return p.createdAt && new Date(p.createdAt) >= start && !isTestRecord(p); });
+    var storeTotal = 0, hqTotal = 0;
+    var byStore = {}, byItem = {}, bySupplier = {};
+    inPeriod.forEach(function (p) {
+      var track = trackForPO(p);
+      if (track === 'hq') { hqTotal += p.totalPrice; } else { storeTotal += p.totalPrice; }
+      var alloc = (p.storeAllocation && p.storeAllocation.length) ? p.storeAllocation : [{ store: track === 'hq' ? 'HQ (unspecified)' : 'Store (unspecified)', qty: p.qty }];
+      var allocSum = alloc.reduce(function (s, a) { return s + Number(a.qty || 0); }, 0) || 1;
+      alloc.forEach(function (a) {
+        var share = (Number(a.qty || 0) / allocSum) * p.totalPrice;
+        byStore[a.store] = (byStore[a.store] || 0) + share;
+      });
+      byItem[p.itemDesc] = (byItem[p.itemDesc] || 0) + p.totalPrice;
+      bySupplier[p.supplierName || 'No preferred supplier on file'] = (bySupplier[p.supplierName || 'No preferred supplier on file'] || 0) + p.totalPrice;
+    });
+    els.spendStore.textContent = money(storeTotal);
+    els.spendHq.textContent = money(hqTotal);
+    var rankedStores = Object.keys(byStore).map(function (s) { return { key: s, total: byStore[s] }; }).sort(function (a, b) { return b.total - a.total; });
+    els.storeBreakdown.innerHTML = rankedStores.length
+      ? rankedStores.map(function (r) { return '<div class="line-detail"><span>' + esc(r.key) + '</span><span class="sub">' + money(r.total) + '</span></div>'; }).join('')
+      : '<div class="sub">No spend in this period.</div>';
+    var rankedItems = Object.keys(byItem).map(function (s) { return { key: s, total: byItem[s] }; }).sort(function (a, b) { return b.total - a.total; });
+    els.itemBreakdown.innerHTML = rankedItems.length
+      ? rankedItems.map(function (r) { return '<div class="line-detail"><span>' + esc(r.key) + '</span><span class="sub">' + money(r.total) + '</span></div>'; }).join('')
+      : '<div class="sub">No spend in this period.</div>';
+    var rankedSuppliers = Object.keys(bySupplier).map(function (s) { return { key: s, total: bySupplier[s] }; }).sort(function (a, b) { return b.total - a.total; });
+    els.supplierBreakdown.innerHTML = rankedSuppliers.length
+      ? rankedSuppliers.map(function (r) { return '<div class="line-detail"><span>' + esc(r.key) + '</span><span class="sub">' + money(r.total) + '</span></div>'; }).join('')
+      : '<div class="sub">No spend in this period.</div>';
+  }
+  document.querySelectorAll('.spend-period').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.spend-period').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      spendPeriod = btn.getAttribute('data-period');
+      renderSpendSummary();
+    });
+  });
+  els.toggleStoreBreakdown.addEventListener('click', function () {
+    var open = els.storeBreakdown.style.display !== 'none';
+    els.storeBreakdown.style.display = open ? 'none' : 'block';
+    els.toggleStoreBreakdown.textContent = open ? 'Show breakdown by store/department ▾' : 'Hide store breakdown ▴';
+  });
+  els.toggleItemBreakdown.addEventListener('click', function () {
+    var open = els.itemBreakdown.style.display !== 'none';
+    els.itemBreakdown.style.display = open ? 'none' : 'block';
+    els.toggleItemBreakdown.textContent = open ? 'Show breakdown by item ▾' : 'Hide item breakdown ▴';
+  });
+  els.toggleSupplierBreakdown.addEventListener('click', function () {
+    var open = els.supplierBreakdown.style.display !== 'none';
+    els.supplierBreakdown.style.display = open ? 'none' : 'block';
+    els.toggleSupplierBreakdown.textContent = open ? 'Show breakdown by supplier ▾' : 'Hide supplier breakdown ▴';
+  });
+
+  async function renderPrList() {
+    var headerIds = Object.keys(headers).sort(function (a, b) {
+      return new Date(headers[b].submittedAt) - new Date(headers[a].submittedAt);
+    }).slice(0, 15);
+    if (!headerIds.length) { els.prList.innerHTML = 'No PRs logged yet.'; return; }
+    var reqIds = headerIds.map(function (id) { return headers[id].requesterId; }).filter(Boolean);
+    var names = await namesFor(reqIds);
+    els.prList.innerHTML = headerIds.map(function (hid) {
+      var h = headers[hid];
+      var hLines = Object.keys(lines).filter(function (lid) { return lines[lid].prHeaderId === hid; });
+      var linesHtml = hLines.map(function (lid) {
+        var l = lines[lid];
+        var statusLabel = { pending: 'pending', awaiting_approval: 'awaiting approval', cancelled: 'cancelled', converted: 'converted' }[l.lineStatus] || l.lineStatus;
+        var tag = '<span class="tag tag-' + l.lineStatus + '">' + esc(statusLabel) + '</span>';
+        var cancelBtn = ((l.lineStatus === 'pending' || l.lineStatus === 'awaiting_approval') && canWrite)
+          ? '<button type="button" class="btn-danger line-cancel" data-id="' + lid + '">Cancel</button>' : '';
+        return '<div class="line-detail"><span>' + esc(l.itemDesc) + ' &middot; qty ' + esc(String(l.qtyRequested)) +
+          '</span><span style="display:flex;align-items:center;gap:8px;">' + tag + cancelBtn + '</span></div>';
+      }).join('');
+      var prCancelBtn = (canWrite && hLines.some(function (lid) { return lines[lid].lineStatus === 'pending' || lines[lid].lineStatus === 'awaiting_approval'; }))
+        ? '<button type="button" class="btn-danger pr-cancel" data-id="' + hid + '">Cancel whole PR</button>' : '';
+      return '<div class="pr-block"><div class="row" style="margin-bottom:4px;"><strong>' + esc(h.prNumber || '') + ' &middot; ' + esc(h.store) + (isTestRecord(h) ? '<span class="test-badge">TEST</span>' : '') +
+        '</strong><span class="sub" style="display:flex;align-items:center;gap:8px;">requested by ' + esc(names[h.requesterId] || 'Someone') + ' &middot; ' + timeAgo(h.submittedAt) +
+        '<button type="button" class="btn-ghost no-print pr-print" data-id="' + hid + '" style="padding:8px 14px;font-size:12.5px;">Print / PDF</button></span></div>' +
+        (h.purpose ? '<div class="sub" style="margin-bottom:4px;font-style:italic;">"' + esc(h.purpose) + '"</div>' : '') +
+        (h.referenceImage ? '<div class="sub" style="margin-bottom:4px;">\ud83d\uddbc\ufe0f <a href="' + esc(h.referenceImage) + '" target="_blank" rel="noopener">View reference image</a></div>' : '') +
+        linesHtml + (prCancelBtn ? '<div style="margin-top:6px;">' + prCancelBtn + '</div>' : '') + '</div>';
+    }).join('');
+
+    els.prList.querySelectorAll('.line-cancel').forEach(function (btn) {
+      btn.addEventListener('click', function () { cancelLine(btn.getAttribute('data-id')); });
+    });
+    els.prList.querySelectorAll('.pr-cancel').forEach(function (btn) {
+      btn.addEventListener('click', function () { cancelPr(btn.getAttribute('data-id')); });
+    });
+    els.prList.querySelectorAll('.pr-print').forEach(function (btn) {
+      btn.addEventListener('click', function () { printPR(btn.getAttribute('data-id')); });
+    });
+  }
+
+  async function printPR(hid) {
+    var h = headers[hid];
+    if (!h) return;
+    var hLines = Object.keys(lines).filter(function (lid) { return lines[lid].prHeaderId === hid; });
+    var names = await namesFor([h.requesterId]);
+    var stepsHtml = (h.approvalSteps && h.approvalSteps.length) ? stepRowsHtml(h.approvalSteps, h.store) : '<div class="sub">No approval required &mdash; Petty Cash.</div>';
+    var rows = hLines.map(function (lid) {
+      var l = lines[lid];
+      var statusLabel = { pending: 'pending', awaiting_approval: 'awaiting approval', cancelled: 'cancelled', converted: 'converted' }[l.lineStatus] || l.lineStatus;
+      return '<tr><td>' + esc(l.itemDesc) + '</td><td>' + esc(String(l.qtyRequested)) + '</td><td>' + esc(statusLabel) + '</td></tr>';
+    }).join('');
+    els.printArea.innerHTML =
+      '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">PURCHASE REQUISITION &nbsp; ' + esc(h.prNumber || '') + '</div>' +
+        '<table style="width:100%;font-size:13px;margin-bottom:18px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>' + (h.track === 'hq' ? 'Department' : 'Store') + '</strong><br>' + esc(h.store) + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Requested by</strong><br>' + esc(names[h.requesterId] || 'Someone') + '<br>' + esc(new Date(h.submittedAt).toDateString()) + '</td>' +
+        '</tr></table>' +
+        (h.purpose ? '<div style="font-size:12px;margin-bottom:8px;"><strong>Purpose/reference:</strong> ' + esc(h.purpose) + '</div>' : '') +
+        (h.referenceImage ? '<div style="font-size:12px;margin-bottom:14px;"><strong>Reference image:</strong> ' + esc(h.referenceImage) + '</div>' : '') +
+        '<table class="report-table" style="width:100%;margin-bottom:18px;"><thead><tr><th>Item</th><th>Qty</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px;">Approval</div>' +
+        stepsHtml +
+      '</div>';
+    setTimeout(function () { window.print(); }, 50);
+  }
+
+  async function renderReview() {
+    var byItem = {};
+    Object.keys(lines).forEach(function (lid) {
+      var l = lines[lid];
+      if (l.lineStatus !== 'pending') return;
+      (byItem[l.itemCode] = byItem[l.itemCode] || []).push(Object.assign({ id: lid }, l));
+    });
+    var codes = Object.keys(byItem);
+    if (!codes.length) { els.reviewList.innerHTML = 'Nothing pending review.'; return; }
+
+    var reqIds = [];
+    codes.forEach(function (c) { byItem[c].forEach(function (l) { if (l.requesterId) reqIds.push(l.requesterId); }); });
+    var names = await namesFor(reqIds);
+
+    codes.sort(function (a, b) { return (items[a] ? items[a].description : a).localeCompare(items[b] ? items[b].description : b); });
+    if (!els.reviewList.querySelector('.review-block')) els.reviewList.innerHTML = '';
+
+    codes.forEach(function (code) {
+      var blockId = 'review-' + code;
+      var existing = document.getElementById(blockId);
+      var group = byItem[code];
+      var sum = group.reduce(function (s, l) { return s + Number(l.qtyRequested || 0); }, 0);
+      var itemInfo = items[code] || { description: code, uom: '', unitPrice: 0, supplierCode: '' };
+      var supplierName = (suppliers[itemInfo.supplierCode] && suppliers[itemInfo.supplierCode].name) || 'No preferred supplier on file';
+
+      var contribHtml = group.map(function (l) {
+        var h = headers[l.prHeaderId];
+        return '<div class="contrib">' + esc(l.store) + ' &middot; qty ' + esc(String(l.qtyRequested)) +
+          ' &middot; ' + esc(names[l.requesterId] || 'Someone') +
+          ' &middot; <span class="sub">' + esc(h ? h.prNumber : '') + '</span></div>';
+      }).join('');
+
+      if (existing) {
+        existing.querySelector('.contrib-wrap').innerHTML = contribHtml;
+        existing.querySelector('.sum-note').textContent = 'Requested total: ' + sum + ' ' + itemInfo.uom;
+        return;
+      }
+
+      var supplierOptions = Object.keys(suppliers).sort(function (a, b) { return suppliers[a].name.localeCompare(suppliers[b].name); })
+        .map(function (c) { return '<option value="' + esc(c) + '"' + (c === itemInfo.supplierCode ? ' selected' : '') + '>' + esc(suppliers[c].name) + '</option>'; }).join('');
+
+      var block = document.createElement('div');
+      block.className = 'review-block';
+      block.id = blockId;
+      block.innerHTML =
+        '<div class="row" style="align-items:flex-start;">' +
+          '<div><strong>' + esc(itemInfo.description) + '</strong><div class="sub">' + esc(code) + ' &middot; ' + esc(supplierName) +
+          ' &middot; ' + money(itemInfo.unitPrice) + ' / ' + esc(itemInfo.uom) + '</div></div>' +
+        '</div>' +
+        '<div class="contrib-wrap" style="margin:8px 0;">' + contribHtml + '</div>' +
+        '<div class="sum-note sub" style="margin-bottom:6px;">Requested total: ' + sum + ' ' + itemInfo.uom + '</div>' +
+        '<div class="row" style="align-items:flex-end;flex-wrap:wrap;">' +
+          '<div style="max-width:140px;"><label>Qty to order</label><input type="number" min="0" class="qty-adjust" value="' + sum + '"></div>' +
+          '<div style="max-width:220px;"><label>Order from</label><select class="supplier-override">' + supplierOptions + '</select></div>' +
+          '<button type="button" class="btn-primary gen-po" ' + (canWrite ? '' : 'disabled') + '>Generate PO directly</button>' +
+          '<button type="button" class="btn-ghost gen-qcs" ' + (canWrite ? '' : 'disabled') + '>Create Quote Comparison</button>' +
+        '</div>';
+      els.reviewList.appendChild(block);
+
+      function currentAllocation() {
+        var byStore = {};
+        group.forEach(function (l) { byStore[l.store] = (byStore[l.store] || 0) + Number(l.qtyRequested || 0); });
+        return Object.keys(byStore).sort().map(function (s) { return { store: s, qty: byStore[s] }; });
+      }
+      function currentPrNumbers() {
+        var set = {};
+        group.forEach(function (l) { var h = headers[l.prHeaderId]; if (h) set[h.prNumber] = true; });
+        return Object.keys(set).sort();
+      }
+
+      block.querySelector('.gen-po').addEventListener('click', function () {
+        var qty = Number(block.querySelector('.qty-adjust').value);
+        var supplierCode = block.querySelector('.supplier-override').value;
+        generatePO(code, qty, group.map(function (l) { return l.id; }), currentAllocation(), supplierCode, currentPrNumbers(), null);
+      });
+      block.querySelector('.gen-qcs').addEventListener('click', function () {
+        var qty = Number(block.querySelector('.qty-adjust').value);
+        createQcs(code, qty, group.map(function (l) { return l.id; }), currentPrNumbers());
+      });
+    });
+
+    // remove blocks for items no longer pending
+    els.reviewList.querySelectorAll('.review-block').forEach(function (b) {
+      var code = b.id.replace('review-', '');
+      if (codes.indexOf(code) === -1) b.remove();
+    });
+  }
+
+  function renderPoList() {
+    var ids = Object.keys(pos).sort(function (a, b) { return new Date(pos[b].createdAt) - new Date(pos[a].createdAt); });
+    if (!ids.length) { els.poList.innerHTML = 'No POs generated yet.'; return; }
+    els.poList.innerHTML = ids.map(function (id) {
+      var p = pos[id];
+      var tag = p.poStatus === 'approved' ? (p.delivered ? '<span class="tag tag-converted">delivered</span>' : '<span class="tag tag-converted">approved</span>') :
+        p.poStatus === 'rejected' ? '<span class="tag tag-cancelled">rejected</span>' :
+        p.poStatus === 'cancelled' ? '<span class="tag tag-cancelled">cancelled</span>' : '<span class="tag tag-pending">awaiting approval</span>';
+      var head = '<div class="line-detail"><span><strong>' + esc(p.poNumber) + '</strong> &middot; ' + esc(p.itemDesc) + (isTestRecord(p) ? '<span class="test-badge">TEST</span>' : '') +
+        ' &middot; qty ' + esc(String(p.qty)) + ' &middot; ' + esc(p.supplierName) + '</span><span class="sub" style="display:flex;align-items:center;gap:10px;">' +
+        money(p.totalPrice) + ' &middot; ' + timeAgo(p.createdAt) + tag +
+        '<button type="button" class="btn-ghost no-print po-print" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Print / PDF</button>' +
+        (p.poStatus === 'approved' && !p.delivered && canWrite ? '<button type="button" class="btn-ghost no-print po-delivered" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Mark delivered</button>' : '') +
+        (p.poStatus === 'approved' && canWrite ? '<button type="button" class="btn-danger no-print po-cancel" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Cancel</button>' : '') +
+        '</span></div>';
+      var refBits = [];
+      if (p.prNumbers && p.prNumbers.length) refBits.push('PR ' + p.prNumbers.join(', '));
+      if (p.qcsNumber) refBits.push(p.qcsNumber);
+      if (refBits.length) head += '<div class="sub" style="padding:0 0 4px 0;">Ref: ' + esc(refBits.join(' \u2192 ')) + '</div>';
+      var allocLine = (p.storeAllocation && p.storeAllocation.length)
+        ? '<div class="sub" style="padding:0 0 6px 0;">Deliver: ' + p.storeAllocation.map(function (a) { return esc(a.store) + ' (' + esc(String(a.qty)) + ')'; }).join(', ') + '</div>'
+        : '';
+      head += allocLine;
+      var savingBits = [];
+      if (p.priorUnitPrice != null && p.savingsTotal) savingBits.push((p.savingsTotal > 0 ? 'Saving ' : 'Increase ') + money(Math.abs(p.savingsTotal)) + ' vs last purchase');
+      if (p.avoidanceTotal) savingBits.push('Avoided ' + money(p.avoidanceTotal) + ' off asking price');
+      if (savingBits.length) head += '<div class="sub" style="padding:0 0 6px 0;color:' + (p.savingsTotal < 0 ? '#B3491F' : '#3A7D44') + ';">' + esc(savingBits.join(' \u00b7 ')) + '</div>';
+      if (p.poStatus !== 'awaiting_approval' || !p.approvalSteps || !p.approvalSteps.length) return head;
+      var actions = canWrite ? '<div style="margin:6px 0 10px 0;display:flex;gap:8px;">' +
+        '<button type="button" class="btn-primary po-step-mark" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Mark done</button>' +
+        '<button type="button" class="btn-danger po-step-reject" data-id="' + id + '">Reject</button></div>' : '';
+      return head + '<div style="padding:0 0 8px 0;">' + stepRowsHtml(p.approvalSteps) + actions + '</div>';
+    }).join('');
+    els.poList.querySelectorAll('.po-print').forEach(function (btn) {
+      btn.addEventListener('click', function () { printPO(btn.getAttribute('data-id')); });
+    });
+    els.poList.querySelectorAll('.po-cancel').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var poId = btn.getAttribute('data-id');
+        var p = pos[poId];
+        try {
+          await db.collection('po_log').doc(poId).update({ poStatus: 'cancelled' });
+          if (p && p.qcsId) {
+            try { await db.collection('quote_comparisons').doc(p.qcsId).update({ status: 'completed', poNumber: '' }); } catch (e) {}
+          }
+        } catch (e) {}
+      });
+    });
+    els.poList.querySelectorAll('.po-delivered').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        try { await db.collection('po_log').doc(btn.getAttribute('data-id')).update({ delivered: true, deliveredAt: new Date().toISOString() }); } catch (e) {}
+      });
+    });
+    els.poList.querySelectorAll('.po-step-mark').forEach(function (btn) {
+      btn.addEventListener('click', function () { markPoStep(btn.getAttribute('data-id')); });
+    });
+    els.poList.querySelectorAll('.po-step-reject').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        try { await db.collection('po_log').doc(btn.getAttribute('data-id')).update({ poStatus: 'rejected' }); } catch (e) {}
+      });
+    });
+  }
+
+  async function markPoStep(poId) {
+    var p = pos[poId];
+    if (!p) return;
+    var steps = p.approvalSteps.slice();
+    var idx = steps.findIndex(function (s) { return !s.done; });
+    if (idx === -1) return;
+    steps[idx] = Object.assign({}, steps[idx], { done: true, doneBy: me.id, doneAt: new Date().toISOString() });
+    var allDone = steps.every(function (s) { return s.done; });
+    try {
+      await db.collection('po_log').doc(poId).update({ approvalSteps: steps, poStatus: allDone ? 'approved' : 'awaiting_approval' });
+    } catch (e) {}
+  }
+
+  async function printPO(poId) {
+    var p = pos[poId];
+    if (!p) return;
+    var supplier = suppliers[p.supplierCode] || {};
+    var names = await namesFor([p.createdBy]);
+    els.printArea.innerHTML =
+      '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">PURCHASE ORDER &nbsp; ' + esc(p.poNumber) + '</div>' +
+        refLineHtml(p) +
+        '<table style="width:100%;font-size:13px;margin-bottom:18px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Supplier</strong><br>' + esc(supplier.name || p.supplierName) +
+          (supplier.contact ? '<br>' + esc(supplier.contact) : '') + (supplier.paymentTerm ? '<br>Terms: ' + esc(supplier.paymentTerm) : '') + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Date</strong><br>' + esc(new Date(p.createdAt).toDateString()) +
+          '<br><strong>Prepared by</strong><br>' + esc(names[p.createdBy] || 'Someone') + '</td>' +
+        '</tr></table>' +
+        '<table class="report-table" style="width:100%;"><thead><tr><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>' +
+          '<tr><td>' + esc(p.itemCode) + '</td><td>' + esc(p.itemDesc) + '</td><td>' + esc(String(p.qty)) + '</td><td>' + money(p.unitPrice) + '</td><td>' + money(p.totalPrice) + '</td></tr>' +
+        '</tbody></table>' +
+        '<div style="text-align:right;font-size:15px;font-weight:600;margin-top:10px;">Grand Total: ' + money(p.totalPrice) + '</div>' +
+        allocationHtml(p) +
+      '</div>';
+    setTimeout(function () { window.print(); }, 50);
+  }
+
+  function refLineHtml(p) {
+    var bits = [];
+    if (p.prNumbers && p.prNumbers.length) bits.push('PR: ' + esc(p.prNumbers.join(', ')));
+    if (p.qcsNumber) bits.push('Quote Comparison: ' + esc(p.qcsNumber));
+    if (!bits.length) return '';
+    return '<div style="font-size:11px;color:#6B6558;margin-bottom:14px;">' + bits.join(' &nbsp;&middot;&nbsp; ') + '</div>';
+  }
+  function allocationHtml(p) {
+    if (!p.storeAllocation || !p.storeAllocation.length) return '';
+    var allocSum = p.storeAllocation.reduce(function (s, a) { return s + Number(a.qty || 0); }, 0);
+    var noteHtml = allocSum !== p.qty
+      ? '<div style="font-size:11px;color:#8A6D00;margin-bottom:6px;">Ordered quantity was adjusted from the ' + allocSum + ' originally requested across stores &mdash; confirm final store split before delivery.</div>'
+      : '';
+    return '<div style="margin-top:22px;">' +
+      '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px;">Delivery Allocation by Store</div>' +
+      noteHtml +
+      '<table class="report-table" style="width:100%;"><thead><tr><th>Store</th><th>Qty</th></tr></thead><tbody>' +
+      p.storeAllocation.map(function (a) { return '<tr><td>' + esc(a.store) + '</td><td>' + esc(String(a.qty)) + '</td></tr>'; }).join('') +
+      '</tbody></table></div>';
+  }
+
+  function groupedByPriceSupplier() {
+    var bySupplier = {};
+    Object.keys(items).forEach(function (c) {
+      var it = items[c];
+      var supName = (suppliers[it.supplierCode] && suppliers[it.supplierCode].name) || 'No preferred supplier on file';
+      (bySupplier[supName] = bySupplier[supName] || []).push(Object.assign({ code: c }, it));
+    });
+    var supNames = Object.keys(bySupplier).sort();
+    supNames.forEach(function (sn) { bySupplier[sn].sort(function (a, b) { return a.description.localeCompare(b.description); }); });
+    return { bySupplier: bySupplier, supNames: supNames };
+  }
+
+  function renderPriceListReport() {
+    if (els.priceListWrap.style.display === 'none') return;
+    if (!Object.keys(items).length) { els.priceListReport.innerHTML = 'No items loaded yet.'; return; }
+    var g = groupedByPriceSupplier();
+    var q = (els.priceListSearch.value || '').trim().toLowerCase();
+    var supNames = g.supNames;
+    var bySupplier = g.bySupplier;
+    if (q) {
+      supNames = [];
+      bySupplier = {};
+      g.supNames.forEach(function (sn) {
+        var supMatches = sn.toLowerCase().indexOf(q) > -1;
+        var rows = g.bySupplier[sn].filter(function (r) {
+          return supMatches || r.code.toLowerCase().indexOf(q) > -1 || r.description.toLowerCase().indexOf(q) > -1;
+        });
+        if (rows.length) { supNames.push(sn); bySupplier[sn] = rows; }
+      });
+    }
+    if (!supNames.length) { els.priceListReport.innerHTML = '<div class="sub" style="padding:14px 0;">No items match "' + esc(els.priceListSearch.value) + '".</div>'; return; }
+    var bodyRows = supNames.map(function (sn) {
+      return '<tr class="report-group-row"><td colspan="5">' + esc(sn) + '</td></tr>' +
+        bySupplier[sn].map(function (r) {
+          return '<tr><td>' + esc(r.code) + '</td><td>' + esc(r.description) + '</td><td>' + esc(r.procurementType || 'Direct') + '</td><td>' + esc(r.uom) + '</td>' +
+            '<td><input type="number" step="0.01" min="0" class="price-edit no-print" data-code="' + esc(r.code) + '" value="' + Number(r.unitPrice || 0).toFixed(2) + '" ' + (canWrite ? '' : 'disabled') + '></td></tr>';
+        }).join('');
+    }).join('');
+    els.priceListReport.innerHTML =
+      '<table class="report-table">' +
+        '<colgroup><col style="width:14%"><col style="width:38%"><col style="width:14%"><col style="width:11%"><col style="width:23%"></colgroup>' +
+        '<thead><tr><th>Code</th><th>Item</th><th>Type</th><th>UOM</th><th>Unit Price</th></tr></thead>' +
+        '<tbody>' + bodyRows + '</tbody>' +
+      '</table>';
+    els.priceListReport.querySelectorAll('.price-edit').forEach(function (inp) {
+      inp.addEventListener('change', async function () {
+        var code = inp.getAttribute('data-code');
+        var val = Number(inp.value);
+        if (!val || val < 0) { inp.value = Number(items[code].unitPrice || 0).toFixed(2); return; }
+        inp.disabled = true;
+        try {
+          await db.collection('items').doc(code).update({ unitPrice: val });
+        } catch (e) { inp.value = Number(items[code].unitPrice || 0).toFixed(2); }
+        inp.disabled = !canWrite;
+      });
+    });
+  }
+
+  function csvEscape(v) {
+    var s = String(v == null ? '' : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  els.openPriceList.addEventListener('click', function () {
+    els.openPriceList.style.display = 'none';
+    els.printPriceListBtn.style.display = 'inline-block';
+    els.downloadPriceListBtn.style.display = downloads ? 'inline-block' : 'none';
+    els.hidePriceList.style.display = 'inline-block';
+    els.priceListWrap.style.display = 'block';
+    renderPriceListReport();
+  });
+  els.hidePriceList.addEventListener('click', function () {
+    els.openPriceList.style.display = 'inline-block';
+    els.printPriceListBtn.style.display = 'none';
+    els.downloadPriceListBtn.style.display = 'none';
+    els.hidePriceList.style.display = 'none';
+    els.priceListWrap.style.display = 'none';
+    els.priceListSearch.value = '';
+  });
+  els.priceListSearch.addEventListener('input', renderPriceListReport);
+
+  els.printPriceListBtn.addEventListener('click', function () {
+    if (!requireExportAuth()) return;
+    var g = groupedByPriceSupplier();
+    var rowsHtml = g.supNames.map(function (sn) {
+      return '<tr class="report-group-row"><td colspan="5">' + esc(sn) + '</td></tr>' +
+        g.bySupplier[sn].map(function (r) {
+          return '<tr><td>' + esc(r.code) + '</td><td>' + esc(r.description) + '</td><td>' + esc(r.procurementType || 'Direct') + '</td><td>' + esc(r.uom) + '</td><td>' + money(r.unitPrice) + '</td></tr>';
+        }).join('');
+    }).join('');
+    els.printArea.classList.add('print-landscape');
+    els.printArea.innerHTML = '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:980px;margin:0 auto;">' +
+      '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:20px;font-weight:700;">Tube Cafe &mdash; Supplier Price List</div>' +
+      '<div style="font-size:12px;color:#6B6558;margin-bottom:16px;">Generated ' + esc(new Date().toDateString()) + '</div>' +
+      '<table class="report-table"><colgroup><col style="width:14%"><col style="width:38%"><col style="width:14%"><col style="width:11%"><col style="width:23%"></colgroup>' +
+      '<thead><tr><th>Code</th><th>Item</th><th>Type</th><th>UOM</th><th>Unit Price</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    setTimeout(function () { window.print(); }, 50);
+  });
+  els.downloadPriceListBtn.addEventListener('click', async function () {
+    if (!requireExportAuth()) return;
+    if (!downloads) return;
+    var rows = [['Item Code', 'Description', 'Category', 'Type', 'UOM', 'Unit Price', 'Supplier']];
+    Object.keys(items).sort(function (a, b) { return items[a].description.localeCompare(items[b].description); }).forEach(function (c) {
+      var it = items[c];
+      var supName = (suppliers[it.supplierCode] && suppliers[it.supplierCode].name) || '';
+      rows.push([c, it.description, it.category || 'Food', it.procurementType || 'Direct', it.uom, it.unitPrice, supName]);
+    });
+    var csv = rows.map(function (r) { return r.map(csvEscape).join(','); }).join('\n');
+    try {
+      await downloads.save({ filename: 'tube-cafe-supplier-price-list.csv', data: csv });
+    } catch (e) {}
+  });
+
+  window.addEventListener('afterprint', function () { els.printArea.innerHTML = ''; els.printArea.classList.remove('print-landscape'); });
+
+  function renderAll() {
+    renderStats();
+    renderSpendSummary();
+    renderApprovals();
+    renderPrList();
+    renderSamples();
+    renderReview();
+    renderQcs();
+    renderPoList();
+    renderPriceListReport();
+    renderMonthlySummary();
+    renderContracts();
+    populateSupplierPickers();
+  }
+
+  function renderMonthlySummary() {
+    var ym = els.summaryMonth.value;
+    if (!ym) return;
+    var prsInMonth = Object.values(headers).filter(function (h) { return (h.submittedAt || '').slice(0, 7) === ym && !isTestRecord(h); });
+    var posInMonth = Object.values(pos).filter(function (p) { return (p.createdAt || '').slice(0, 7) === ym && !isTestRecord(p); });
+    var prValue = prsInMonth.reduce(function (s, h) { return s + (h.totalValue || 0); }, 0);
+    var poValue = posInMonth.reduce(function (s, p) { return s + (p.totalPrice || 0); }, 0);
+    var approvedPOs = posInMonth.filter(function (p) { return p.poStatus === 'approved'; });
+    var rejectedCount = prsInMonth.filter(function (h) { return h.headerStatus === 'rejected'; }).length +
+      posInMonth.filter(function (p) { return p.poStatus === 'rejected'; }).length;
+    var storesThisMonth = {};
+    prsInMonth.forEach(function (h) { if (h.store) storesThisMonth[h.store.trim().toLowerCase()] = true; });
+    var avgPerPr = prsInMonth.length ? prValue / prsInMonth.length : 0;
+
+    var bySupplier = {};
+    posInMonth.forEach(function (p) { bySupplier[p.supplierName] = (bySupplier[p.supplierName] || 0) + p.totalPrice; });
+    var topSuppliers = Object.keys(bySupplier).map(function (n) { return { name: n, total: bySupplier[n] }; })
+      .sort(function (a, b) { return b.total - a.total; }).slice(0, 5);
+
+    var byCat = { Food: 0, 'Non-food': 0 };
+    var byType = { Direct: 0, Indirect: 0 };
+    posInMonth.forEach(function (p) {
+      var it = items[p.itemCode] || {};
+      var cat = it.category || 'Food';
+      var ptype = it.procurementType || 'Direct';
+      byCat[cat] = (byCat[cat] || 0) + p.totalPrice;
+      byType[ptype] = (byType[ptype] || 0) + p.totalPrice;
+    });
+
+    var savingsMonth = posInMonth.reduce(function (s, p) { return s + (p.savingsTotal || 0); }, 0);
+    var avoidanceMonth = posInMonth.reduce(function (s, p) { return s + (p.avoidanceTotal || 0); }, 0);
+    var yearPrefix = ym.slice(0, 4);
+    var posInYear = Object.values(pos).filter(function (p) { return (p.createdAt || '').slice(0, 4) === yearPrefix && !isTestRecord(p); });
+    var savingsYear = posInYear.reduce(function (s, p) { return s + (p.savingsTotal || 0); }, 0);
+    var avoidanceYear = posInYear.reduce(function (s, p) { return s + (p.avoidanceTotal || 0); }, 0);
+
+    var html = '<div class="summary-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;">' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;">' + prsInMonth.length + '</div><div class="sub">PRs submitted</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;">' + money(prValue) + '</div><div class="sub">PR value requested</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;">' + Object.keys(storesThisMonth).length + '</div><div class="sub">Stores/departments requesting</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;">' + money(avgPerPr) + '</div><div class="sub">Average spend per PR</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;">' + approvedPOs.length + '</div><div class="sub">POs approved</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;">' + money(poValue) + '</div><div class="sub">PO value issued</div></div>' +
+      '</div>';
+    html += '<div class="summary-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;padding-top:14px;border-top:1px solid var(--line);">' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;color:#3A7D44;">' + money(savingsMonth) + '</div><div class="sub">Cost savings, this month</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;color:#3A7D44;">' + money(avoidanceMonth) + '</div><div class="sub">Cost avoidance, this month</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;color:#3A7D44;">' + money(savingsYear) + '</div><div class="sub">Cost savings, ' + esc(yearPrefix) + ' to date</div></div>' +
+      '<div><div class="num" style="font-size:22px;font-weight:600;color:#3A7D44;">' + money(avoidanceYear) + '</div><div class="sub">Cost avoidance, ' + esc(yearPrefix) + ' to date</div></div>' +
+      '</div>';
+    html += '<div class="summary-breakdown" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;">';
+    html += '<div><div class="sub" style="margin-bottom:6px;">Top suppliers by spend</div>' +
+      (topSuppliers.length ? topSuppliers.map(function (s) { return '<div class="line-detail"><span>' + esc(s.name) + '</span><span class="sub">' + money(s.total) + '</span></div>'; }).join('') : '<div class="sub">No POs this month.</div>') + '</div>';
+    html += '<div><div class="sub" style="margin-bottom:6px;">Spend by category</div>' +
+      '<div class="line-detail"><span>Food</span><span class="sub">' + money(byCat.Food) + '</span></div>' +
+      '<div class="line-detail"><span>Non-food</span><span class="sub">' + money(byCat['Non-food']) + '</span></div>' +
+      '<div class="line-detail"><span>Rejected (PR + PO)</span><span class="sub">' + rejectedCount + '</span></div></div>';
+    html += '<div><div class="sub" style="margin-bottom:6px;">Spend by procurement type</div>' +
+      '<div class="line-detail"><span>Direct</span><span class="sub">' + money(byType.Direct) + '</span></div>' +
+      '<div class="line-detail"><span>Indirect</span><span class="sub">' + money(byType.Indirect) + '</span></div></div>';
+    html += '</div>';
+    els.monthlySummary.innerHTML = html;
+  }
+  (function () {
+    var now = new Date();
+    els.summaryMonth.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  })();
+  els.summaryMonth.addEventListener('change', renderMonthlySummary);
+  document.getElementById('printSummary').addEventListener('click', function () {
+    var label = els.summaryMonth.value;
+    els.printArea.innerHTML = '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;">' +
+      '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:20px;font-weight:700;">Tube Cafe &mdash; Monthly Procurement Summary</div>' +
+      '<div style="font-size:12px;color:#6B6558;margin-bottom:16px;">' + esc(label) + '</div>' +
+      els.monthlySummary.innerHTML + '</div>';
+    setTimeout(function () { window.print(); }, 50);
+  });
+
+  function roleEmailFor(role, store) {
+    if (role === 'HOD') return store ? (approvalRoles.hodByStore[store] || '') : '';
+    if (role.indexOf('Finance') > -1) return approvalRoles.financeEmail;
+    if (role === 'CEO') return approvalRoles.ceoEmail;
+    if (role.indexOf('Supply Chain') > -1) return approvalRoles.supplyChainEmail;
+    return '';
+  }
+  function stepRowsHtml(steps, store) {
+    var firstUndone = steps.findIndex(function (s) { return !s.done; });
+    return steps.map(function (s, i) {
+      var cls = s.done ? 'step-done' : (i === firstUndone ? 'step-current' : 'step-future');
+      var dot = s.done ? '✓' : String(i + 1);
+      var email = roleEmailFor(s.role, store);
+      return '<div class="step-row ' + cls + '"><span class="step-dot">' + dot + '</span><span>' + esc(s.verb) + ' by ' + esc(s.role) +
+        (email ? ' <span class="sub">(' + esc(email) + ')</span>' : '') + '</span></div>';
+    }).join('');
+  }
+
+  async function renderApprovals() {
+    var pending = Object.keys(headers).filter(function (hid) { return headers[hid].headerStatus === 'awaiting_approval'; });
+    if (!pending.length) { els.approvalsList.innerHTML = 'Nothing awaiting approval.'; return; }
+    pending.sort(function (a, b) { return new Date(headers[a].submittedAt) - new Date(headers[b].submittedAt); });
+    var reqIds = pending.map(function (hid) { return headers[hid].requesterId; });
+    var names = await namesFor(reqIds);
+    els.approvalsList.innerHTML = pending.map(function (hid) {
+      var h = headers[hid];
+      return '<div class="approval-card">' +
+        '<div class="row" style="margin-bottom:6px;"><strong>' + esc(h.prNumber) + ' &middot; ' + esc(h.store) + '</strong><span class="sub">' + money(h.totalValue) + '</span></div>' +
+        '<div class="sub" style="margin-bottom:8px;">Requested by ' + esc(names[h.requesterId] || 'Someone') + '</div>' +
+        stepRowsHtml(h.approvalSteps, h.store) +
+        (canWrite ? '<div style="margin-top:10px;display:flex;gap:8px;">' +
+          '<button type="button" class="btn-primary step-mark" data-id="' + hid + '" style="padding:7px 14px;font-size:12.5px;">Mark done</button>' +
+          '<button type="button" class="btn-danger step-reject" data-id="' + hid + '">Reject</button></div>' : '') +
+        '</div>';
+    }).join('');
+    els.approvalsList.querySelectorAll('.step-mark').forEach(function (btn) {
+      btn.addEventListener('click', function () { markStep(btn.getAttribute('data-id')); });
+    });
+    els.approvalsList.querySelectorAll('.step-reject').forEach(function (btn) {
+      btn.addEventListener('click', function () { rejectHeader(btn.getAttribute('data-id')); });
+    });
+  }
+
+  async function markStep(headerId) {
+    var h = headers[headerId];
+    if (!h) return;
+    var steps = h.approvalSteps.slice();
+    var idx = steps.findIndex(function (s) { return !s.done; });
+    if (idx === -1) return;
+    steps[idx] = Object.assign({}, steps[idx], { done: true, doneBy: me.id, doneAt: new Date().toISOString() });
+    var allDone = steps.every(function (s) { return s.done; });
+    try {
+      await db.collection('pr_headers').doc(headerId).update({
+        approvalSteps: steps, headerStatus: allDone ? 'approved' : 'awaiting_approval'
+      });
+      if (allDone) {
+        var lids = Object.keys(lines).filter(function (lid) { return lines[lid].prHeaderId === headerId && lines[lid].lineStatus === 'awaiting_approval'; });
+        for (var i = 0; i < lids.length; i++) {
+          try { await db.collection('pr_lines').doc(lids[i]).update({ lineStatus: 'pending' }); } catch (e) {}
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function rejectHeader(headerId) {
+    try {
+      await db.collection('pr_headers').doc(headerId).update({ headerStatus: 'rejected' });
+      var lids = Object.keys(lines).filter(function (lid) { return lines[lid].prHeaderId === headerId && lines[lid].lineStatus === 'awaiting_approval'; });
+      for (var i = 0; i < lids.length; i++) {
+        try { await db.collection('pr_lines').doc(lids[i]).update({ lineStatus: 'cancelled' }); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+
+  var STAGE_META = {
+    draft: { label: 'Draft', pct: 12 },
+    review: { label: 'Under Review', pct: 32 },
+    clause_negotiation: { label: 'Clause Negotiation', pct: 50 },
+    pending_approval: { label: 'Pending Internal Approval', pct: 70 },
+    pending_signature: { label: 'Pending Supplier Signature', pct: 88 },
+    signed: { label: 'Signed', pct: 100 },
+    on_hold: { label: 'On Hold', pct: null },
+    cancelled: { label: 'Cancelled', pct: null }
+  };
+  function stageOptionsHtml(current) {
+    return Object.keys(STAGE_META).map(function (k) {
+      return '<option value="' + k + '"' + (k === current ? ' selected' : '') + '>' + esc(STAGE_META[k].label) + '</option>';
+    }).join('');
+  }
+  var SAMPLE_STATUS = {
+    sourcing: 'Sourcing from supplier',
+    under_review: 'Under Review',
+    under_evaluation: 'Under Evaluation',
+    under_consideration: 'Under Consideration',
+    pass: 'Pass',
+    fail: 'Fail',
+    not_meet_requirement: 'Not Meet Requirement'
+  };
+  function sampleStatusOptionsHtml(current) {
+    return Object.keys(SAMPLE_STATUS).map(function (k) {
+      return '<option value="' + k + '"' + (k === current ? ' selected' : '') + '>' + esc(SAMPLE_STATUS[k]) + '</option>';
+    }).join('');
+  }
+  function sampleStatusTagClass(status) {
+    if (status === 'pass') return 'tag-converted';
+    if (status === 'fail' || status === 'not_meet_requirement') return 'tag-cancelled';
+    return 'tag-pending';
+  }
+  async function renderSamples() {
+    var ids = Object.keys(samples).sort(function (a, b) { return new Date(samples[b].submittedAt) - new Date(samples[a].submittedAt); });
+    if (!ids.length) { els.srList.innerHTML = 'No sample requests yet.'; return; }
+    var names = await namesFor(ids.map(function (id) { return samples[id].requesterId; }));
+    els.srList.innerHTML = ids.map(function (id) {
+      var s = samples[id];
+      var status = s.status || 'sourcing';
+      var tag = '<span class="tag ' + sampleStatusTagClass(status) + '">' + esc(SAMPLE_STATUS[status] || status) + '</span>';
+      var detailBits = [];
+      if (s.purpose) detailBits.push('Purpose: ' + s.purpose);
+      if (s.timeline) detailBits.push(s.timeline);
+      if (s.place) detailBits.push('Place: ' + s.place);
+      var specBits = [];
+      if (s.size) specBits.push('Size ' + s.size);
+      if (s.material) specBits.push(s.material);
+      if (s.colorCode) specBits.push('Color ' + s.colorCode);
+      var cancelBtn = (canWrite && status !== 'cancelled')
+        ? '<button type="button" class="btn-danger sr-cancel" data-id="' + id + '">Cancel</button>' : '';
+      return '<div class="approval-card">' +
+        '<div class="row" style="margin-bottom:4px;"><div><strong>' + esc(s.srNumber || '') + ' &middot; ' + esc(s.itemName) + '</strong>' + (isTestRecord(s) ? '<span class="test-badge">TEST</span>' : '') +
+        '<div class="sub">' + esc(s.store) + ' &middot; qty ' + esc(String(s.qty)) + ' &middot; requested by ' + esc(names[s.requesterId] || 'Someone') + ' &middot; ' + timeAgo(s.submittedAt) + '</div></div>' + tag + '</div>' +
+        (detailBits.length ? '<div class="sub" style="margin:4px 0;">' + esc(detailBits.join(' \u00b7 ')) + '</div>' : '') +
+        (specBits.length ? '<div class="sub">' + esc(specBits.join(' \u00b7 ')) + '</div>' : '') +
+        (s.image ? '<div class="sub">\ud83d\uddbc\ufe0f ' + esc(s.image) + '</div>' : '') +
+        (s.comment ? '<div class="sub" style="margin-top:4px;font-style:italic;">"' + esc(s.comment) + '"</div>' : '') +
+        (canWrite ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">' +
+          '<select class="sr-status" data-id="' + id + '" style="width:auto;font-size:12px;padding:6px 8px;">' + sampleStatusOptionsHtml(status) + '</select>' +
+          '<input class="sr-comment" data-id="' + id + '" placeholder="Add a comment for Procurement" style="max-width:260px;font-size:12px;padding:6px 8px;" value="">' +
+          '<button type="button" class="btn-ghost sr-save" data-id="' + id + '" style="padding:6px 12px;font-size:12px;">Update</button>' +
+          cancelBtn + '</div>' : '') +
+        '</div>';
+    }).join('');
+    els.srList.querySelectorAll('.sr-save').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var id = btn.getAttribute('data-id');
+        var statusSel = els.srList.querySelector('.sr-status[data-id="' + id + '"]');
+        var commentInp = els.srList.querySelector('.sr-comment[data-id="' + id + '"]');
+        var patch = { status: statusSel.value };
+        if (commentInp.value.trim()) patch.comment = commentInp.value.trim();
+        try { await db.collection('sample_requests').doc(id).update(patch); } catch (e) {}
+      });
+    });
+    els.srList.querySelectorAll('.sr-cancel').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        try { await db.collection('sample_requests').doc(btn.getAttribute('data-id')).update({ status: 'cancelled' }); } catch (e) {}
+      });
+    });
+  }
+
+  els.srForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (!canWrite) return;
+    els.srSubmitBtn.disabled = true;
+    els.srFormMsg.textContent = 'Submitting…';
+    try {
+      var track = (document.querySelector('input[name="srTrack"]:checked') || {}).value || 'store';
+      await db.collection('sample_requests').add({
+        srNumber: 'SR-' + Date.now().toString(36).toUpperCase(),
+        track: track,
+        store: document.getElementById('sr_store').value.trim(),
+        itemName: document.getElementById('sr_item').value.trim(),
+        purpose: document.getElementById('sr_purpose').value.trim(),
+        timeline: document.getElementById('sr_timeline').value.trim(),
+        qty: Number(document.getElementById('sr_qty').value) || 1,
+        place: document.getElementById('sr_place').value.trim(),
+        size: document.getElementById('sr_size').value.trim(),
+        material: document.getElementById('sr_material').value.trim(),
+        colorCode: document.getElementById('sr_color').value.trim(),
+        image: document.getElementById('sr_image').value.trim(),
+        status: 'sourcing', comment: '',
+        requesterId: me.id, submittedAt: new Date().toISOString(), isTest: approvalRoles.testingMode
+      });
+      els.srForm.reset();
+      els.srFormMsg.textContent = 'Submitted — Procurement will source suppliers and follow up.';
+      setTimeout(function () { els.srFormMsg.textContent = ''; }, 4000);
+    } catch (err) { els.srFormMsg.textContent = 'Could not submit.'; }
+    els.srSubmitBtn.disabled = !canWrite;
+  });
+
+  function renderContracts() {
+    var ids = Object.keys(contracts);
+    if (!ids.length) { els.contractsList.innerHTML = 'No contracts logged yet.'; return; }
+    var today = new Date().toISOString().slice(0, 10);
+    var soonCutoff = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    ids.sort(function (a, b) { return (contracts[a].expiry || '9999').localeCompare(contracts[b].expiry || '9999'); });
+    els.contractsList.innerHTML = ids.map(function (id) {
+      var c = contracts[id];
+      var stage = c.stage || 'draft';
+      var meta = STAGE_META[stage] || STAGE_META.draft;
+      var supName = (suppliers[c.supplierCode] && suppliers[c.supplierCode].name) || c.supplierCode || '';
+      var statusHtml;
+      if (stage === 'signed') {
+        statusHtml = !c.expiry ? '<span class="tag tag-converted">signed</span>' :
+          c.expiry < today ? '<span class="tag tag-cancelled">expired</span>' :
+          c.expiry <= soonCutoff ? '<span class="tag tag-pending">expiring soon</span>' : '<span class="tag tag-converted">active</span>';
+      } else if (stage === 'on_hold') {
+        statusHtml = '<span class="tag tag-cancelled">on hold</span>';
+      } else if (stage === 'cancelled') {
+        statusHtml = '<span class="tag tag-cancelled">cancelled</span>';
+      } else {
+        statusHtml = '<span class="tag tag-pending">' + esc(meta.label) + '</span>';
+      }
+      var barHtml = (meta.pct != null && stage !== 'signed')
+        ? '<div class="stage-bar-track"><div class="stage-bar-fill" style="width:' + meta.pct + '%;"></div></div>'
+        : '';
+      var stageSelect = canWrite
+        ? '<select class="ct-stage-edit" data-id="' + id + '" style="width:auto;font-size:11px;padding:4px 6px;margin-top:4px;">' + stageOptionsHtml(stage) + '</select>'
+        : '';
+      return '<div class="line-detail" style="align-items:flex-start;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid var(--line);">' +
+        '<div class="row" style="width:100%;margin-bottom:0;"><strong>' + esc(c.name) + '</strong>' + statusHtml + '</div>' +
+        '<div class="sub">' + esc(supName) + (c.start ? ' &middot; from ' + esc(c.start) : '') + (c.expiry ? ' &middot; expires ' + esc(c.expiry) : '') + '</div>' +
+        barHtml +
+        (c.terms ? '<div class="sub">' + esc(c.terms) + '</div>' : '') +
+        (c.pointer ? '<div class="sub">📎 ' + esc(c.pointer) + '</div>' : '') +
+        stageSelect +
+        '</div>';
+    }).join('');
+    els.contractsList.querySelectorAll('.ct-stage-edit').forEach(function (sel) {
+      sel.addEventListener('change', async function () {
+        try { await db.collection('contracts').doc(sel.getAttribute('data-id')).update({ stage: sel.value }); } catch (e) {}
+      });
+    });
+  }
+
+  function populateSupplierPickers() {
+    var codes = Object.keys(suppliers).sort(function (a, b) { return suppliers[a].name.localeCompare(suppliers[b].name); });
+    var optionsHtml = '<option value="">Select…</option>' + codes.map(function (c) {
+      return '<option value="' + esc(c) + '">' + esc(suppliers[c].name) + '</option>';
+    }).join('');
+    ['ei_supplier', 'ni_supplier', 'ct_supplier'].forEach(function (id) {
+      var sel = document.getElementById(id);
+      if (sel && sel.dataset.built !== String(codes.length)) {
+        var cur = sel.value;
+        sel.innerHTML = optionsHtml;
+        sel.value = cur;
+        sel.dataset.built = String(codes.length);
+      }
+    });
+    els.suppliersDatalist.innerHTML = codes.map(function (c) {
+      return '<option value="' + esc(c) + ' — ' + esc(suppliers[c].name) + '">';
+    }).join('');
+  }
+
+  // ---- db subscriptions ----
+  db.collection('items').onSnapshot(function (snap) {
+    items = {}; snap.docs.forEach(function (d) { items[d.id] = d.data(); });
+    els.itemsDatalist.innerHTML = Object.keys(items).sort(function (a, b) {
+      return items[a].description.localeCompare(items[b].description);
+    }).map(function (c) { return '<option value="' + esc(c) + ' — ' + esc(items[c].description) + '">'; }).join('');
+    renderAll();
+  }, function () {});
+
+  db.collection('suppliers').onSnapshot(function (snap) {
+    suppliers = {}; snap.docs.forEach(function (d) { suppliers[d.id] = d.data(); });
+    renderAll();
+  }, function () {});
+
+  db.collection('pr_headers').onSnapshot(function (snap) {
+    headers = {}; snap.docs.forEach(function (d) { headers[d.id] = d.data(); });
+    renderAll();
+  }, function (err) {
+    els.banner.innerHTML = '<div class="banner">Live updates stopped (' + esc(err.code) + '). Reload to reconnect.</div>';
+  });
+
+  db.collection('pr_lines').onSnapshot(function (snap) {
+    lines = {}; snap.docs.forEach(function (d) { lines[d.id] = d.data(); });
+    renderAll();
+  }, function () {});
+
+  db.collection('po_log').onSnapshot(function (snap) {
+    pos = {}; snap.docs.forEach(function (d) { pos[d.id] = d.data(); });
+    renderAll();
+  }, function () {});
+
+  db.collection('quote_comparisons').onSnapshot(function (snap) {
+    qcs = {}; snap.docs.forEach(function (d) { qcs[d.id] = d.data(); });
+    renderAll();
+  }, function () {});
+
+  db.collection('contracts').onSnapshot(function (snap) {
+    contracts = {}; snap.docs.forEach(function (d) { contracts[d.id] = d.data(); });
+    renderAll();
+  }, function () {});
+
+  db.collection('sample_requests').onSnapshot(function (snap) {
+    samples = {}; snap.docs.forEach(function (d) { samples[d.id] = d.data(); });
+    renderAll();
+  }, function () {});
+
+  // ---- actions ----
+  els.prForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var store = document.getElementById('store').value.trim();
+    var rowEls = Array.prototype.slice.call(els.lineRows.querySelectorAll('.line-row'));
+    var parsed = [];
+    for (var i = 0; i < rowEls.length; i++) {
+      var typed = rowEls[i].querySelector('.line-item').value;
+      var qty = Number(rowEls[i].querySelector('.line-qty').value);
+      if (!typed && !qty) continue;
+      var code = matchItem(typed);
+      if (!code) { els.formMsg.textContent = 'Row ' + (i + 1) + ': pick an item from the list.'; return; }
+      if (!qty || qty <= 0) { els.formMsg.textContent = 'Row ' + (i + 1) + ': enter a quantity.'; return; }
+      parsed.push({ code: code, qty: qty });
+    }
+    if (!store || !parsed.length) { els.formMsg.textContent = 'Add a store and at least one item.'; return; }
+
+    els.submitBtn.disabled = true;
+    els.formMsg.textContent = 'Submitting…';
+    try {
+      var now = new Date().toISOString();
+      var totalValue = parsed.reduce(function (sum, p) {
+        var it = items[p.code] || {};
+        return sum + p.qty * (it.unitPrice || 0);
+      }, 0);
+      var track = (document.querySelector('input[name="prTrack"]:checked') || {}).value || 'store';
+      var av = approvalStepsForValue(totalValue, 'pr');
+      var headerStatus = av.tier === 'petty_cash' ? 'petty_cash' : 'awaiting_approval';
+      var lineInitStatus = av.tier === 'petty_cash' ? 'pending' : 'awaiting_approval';
+      var hRes = await db.collection('pr_headers').add({
+        prNumber: 'PR-' + Date.now().toString(36).toUpperCase(),
+        store: store, track: track, requesterId: me.id, submittedAt: now, status: 'open',
+        totalValue: totalValue, approvalTier: av.tier, approvalSteps: stepsWithState(av.steps),
+        headerStatus: headerStatus, isTest: approvalRoles.testingMode,
+        purpose: document.getElementById('pr_purpose').value.trim(),
+        referenceImage: document.getElementById('pr_image').value.trim()
+      });
+      for (var j = 0; j < parsed.length; j++) {
+        var it2 = items[parsed[j].code] || {};
+        await db.collection('pr_lines').add({
+          prHeaderId: hRes.id, itemCode: parsed[j].code, itemDesc: it2.description || parsed[j].code,
+          uom: it2.uom || '', qtyRequested: parsed[j].qty, store: store, requesterId: me.id,
+          submittedAt: now, lineStatus: lineInitStatus, isTest: approvalRoles.testingMode
+        });
+      }
+      els.prForm.reset();
+      els.lineRows.innerHTML = '';
+      addLineRow();
+      els.formMsg.textContent = av.tier === 'petty_cash'
+        ? 'Submitted — under $100, routed as Petty Cash, no approval needed.'
+        : 'Submitted — awaiting ' + av.steps[0].role + '.';
+      setTimeout(function () { els.formMsg.textContent = ''; }, 4000);
+    } catch (err) {
+      els.formMsg.textContent = 'Could not submit (' + (err && err.code ? err.code : 'error') + ').';
+    }
+    els.submitBtn.disabled = !canWrite;
+  });
+
+  async function cancelLine(lineId) {
+    try { await db.collection('pr_lines').doc(lineId).update({ lineStatus: 'cancelled' }); } catch (e) {}
+  }
+  async function cancelPr(headerId) {
+    var toCancel = Object.keys(lines).filter(function (lid) {
+      return lines[lid].prHeaderId === headerId && (lines[lid].lineStatus === 'pending' || lines[lid].lineStatus === 'awaiting_approval');
+    });
+    for (var i = 0; i < toCancel.length; i++) {
+      try { await db.collection('pr_lines').doc(toCancel[i]).update({ lineStatus: 'cancelled' }); } catch (e) {}
+    }
+    try { await db.collection('pr_headers').doc(headerId).update({ headerStatus: 'rejected' }); } catch (e) {}
+  }
+  async function generatePO(itemCode, qty, lineIds, allocation, supplierCodeOverride, prNumbers, qcsRef, unitPriceOverride, originalPriceOverride) {
+    if (!qty || qty < 0) return;
+    var itemInfo = items[itemCode] || { description: itemCode, unitPrice: 0, supplierCode: '' };
+    var supplierCode = supplierCodeOverride || itemInfo.supplierCode || '';
+    var supplier = suppliers[supplierCode] || { name: 'No preferred supplier on file' };
+    var unitPrice = (unitPriceOverride != null) ? unitPriceOverride : (itemInfo.unitPrice || 0);
+    var poNumber = 'PO-' + String(Object.keys(pos).length + 1).padStart(4, '0');
+    var totalPrice = qty * unitPrice;
+    var av = approvalStepsForValue(totalPrice, 'po');
+
+    // cost savings: vs. the most recent prior PO for this same item, from actual purchase history
+    var priorUnitPrice = null;
+    Object.keys(pos).forEach(function (pid) {
+      var prev = pos[pid];
+      if (prev.itemCode === itemCode && (priorUnitPrice === null || new Date(prev.createdAt) > priorUnitPrice.at)) {
+        priorUnitPrice = { value: prev.unitPrice, at: new Date(prev.createdAt) };
+      }
+    });
+    var savingsPerUnit = priorUnitPrice ? (priorUnitPrice.value - unitPrice) : 0;
+    var savingsTotal = priorUnitPrice ? savingsPerUnit * qty : 0;
+
+    // cost avoidance: vs. the supplier's original pre-negotiation asking price, this deal only
+    var originalPrice = (originalPriceOverride != null) ? originalPriceOverride : unitPrice;
+    var avoidancePerUnit = originalPrice - unitPrice;
+    var avoidanceTotal = avoidancePerUnit * qty;
+
+    try {
+      var poRes = await db.collection('po_log').add({
+        poNumber: poNumber, itemCode: itemCode, itemDesc: itemInfo.description,
+        supplierCode: supplierCode, supplierName: supplier.name,
+        qty: qty, unitPrice: unitPrice, totalPrice: totalPrice,
+        approvalTier: av.tier, approvalSteps: stepsWithState(av.steps),
+        poStatus: av.tier === 'petty_cash' ? 'approved' : 'awaiting_approval',
+        createdAt: new Date().toISOString(), createdBy: me.id, lineIds: lineIds,
+        storeAllocation: allocation || [], prNumbers: prNumbers || [],
+        qcsId: (qcsRef && qcsRef.id) || '', qcsNumber: (qcsRef && qcsRef.number) || '',
+        priorUnitPrice: priorUnitPrice ? priorUnitPrice.value : null, savingsPerUnit: savingsPerUnit, savingsTotal: savingsTotal,
+        originalPrice: originalPrice, avoidancePerUnit: avoidancePerUnit, avoidanceTotal: avoidanceTotal,
+        delivered: false, isTest: approvalRoles.testingMode
+      });
+      for (var i = 0; i < lineIds.length; i++) {
+        try { await db.collection('pr_lines').doc(lineIds[i]).update({ lineStatus: 'converted', poId: poRes.id }); } catch (e) {}
+      }
+      if (qcsRef && qcsRef.id) {
+        try { await db.collection('quote_comparisons').doc(qcsRef.id).update({ status: 'converted', poNumber: poNumber }); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+
+  // ---- quote comparison ----
+  async function createQcs(itemCode, qty, lineIds, prNumbers) {
+    var itemInfo = items[itemCode] || { description: itemCode, uom: '', unitPrice: 0, supplierCode: '' };
+    var qcsNumber = 'QCS-' + String(Object.keys(qcs).length + 1).padStart(4, '0');
+    var quotes = itemInfo.supplierCode ? [{ supplierCode: itemInfo.supplierCode, supplierName: (suppliers[itemInfo.supplierCode] || {}).name || '', unitPrice: itemInfo.unitPrice || 0, originalPrice: itemInfo.unitPrice || 0 }] : [];
+    try {
+      await db.collection('quote_comparisons').add({
+        qcsNumber: qcsNumber, itemCode: itemCode, itemDesc: itemInfo.description, uom: itemInfo.uom || '',
+        qty: qty, lineIds: lineIds, prNumbers: prNumbers || [], quotes: quotes, selectedIdx: null,
+        status: 'draft', createdBy: me.id, createdAt: new Date().toISOString(), isTest: approvalRoles.testingMode
+      });
+    } catch (e) {}
+  }
+
+  function wireQcsPickButtons(container, id) {
+    container.querySelectorAll('.qcs-pick').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        try { await db.collection('quote_comparisons').doc(id).update({ selectedIdx: Number(btn.getAttribute('data-idx')) }); } catch (e) {}
+      });
+    });
+  }
+  function wireQcsPrintButton(container, id) {
+    var btn = container.querySelector('.qcs-print');
+    if (btn) btn.addEventListener('click', function () { printQcs(id); });
+  }
+  function printQcs(id) {
+    var q = qcs[id];
+    if (!q) return;
+    var rows = q.quotes.map(function (qu, i) {
+      var isWinner = q.selectedIdx === i;
+      var hasDiscount = qu.originalPrice && qu.originalPrice > qu.unitPrice;
+      var priceCell = hasDiscount
+        ? '<span style="text-decoration:line-through;color:#8A8371;">' + money(qu.originalPrice) + '</span> ' + money(qu.unitPrice)
+        : money(qu.unitPrice);
+      return '<tr' + (isWinner ? ' style="font-weight:600;"' : '') + '><td>' + esc(qu.supplierName) + (isWinner ? ' (selected)' : '') + '</td><td>' + priceCell + '</td></tr>';
+    }).join('');
+    els.printArea.innerHTML =
+      '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">QUOTE COMPARISON SHEET &nbsp; ' + esc(q.qcsNumber) + '</div>' +
+        '<div style="font-size:11px;color:#6B6558;margin-bottom:14px;">PR: ' + esc((q.prNumbers || []).join(', ')) + '</div>' +
+        '<table style="width:100%;font-size:13px;margin-bottom:18px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Item</strong><br>' + esc(q.itemDesc) + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Qty</strong><br>' + esc(String(q.qty)) + ' ' + esc(q.uom) + '</td>' +
+        '</tr></table>' +
+        '<table class="report-table" style="width:100%;"><thead><tr><th>Supplier</th><th>Unit Price</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<div style="font-size:11px;color:#6B6558;margin-top:14px;">Status: ' + esc(q.status) + '</div>' +
+      '</div>';
+    setTimeout(function () { window.print(); }, 50);
+  }
+
+  function renderQcs() {
+    var ids = Object.keys(qcs).sort(function (a, b) { return new Date(qcs[b].createdAt) - new Date(qcs[a].createdAt); });
+    if (!ids.length) { els.qcsList.innerHTML = 'No comparison sheets yet.'; return; }
+    if (!els.qcsList.querySelector('.qcs-block')) els.qcsList.innerHTML = '';
+
+    ids.forEach(function (id) {
+      var q = qcs[id];
+      var blockId = 'qcs-' + id;
+      var existing = document.getElementById(blockId);
+      var statusTag = q.status === 'converted' ? '<span class="tag tag-converted">PO ' + esc(q.poNumber || '') + '</span>' :
+        q.status === 'completed' ? '<span class="tag tag-converted">completed</span>' :
+        q.status === 'cancelled' ? '<span class="tag tag-cancelled">cancelled</span>' : '<span class="tag tag-pending">draft</span>';
+      var quotesHtml = q.quotes.map(function (qu, i) {
+        var isWinner = q.selectedIdx === i;
+        var pickBtn = ((q.status === 'draft' || q.status === 'completed') && canWrite)
+          ? '<button type="button" class="btn-ghost qcs-pick" data-id="' + id + '" data-idx="' + i + '" style="padding:8px 14px;font-size:12.5px;">' + (isWinner ? 'Selected' : 'Select') + '</button>' : '';
+        var hasDiscount = qu.originalPrice && qu.originalPrice > qu.unitPrice;
+        var priceHtml = hasDiscount
+          ? '<span style="text-decoration:line-through;color:var(--sub);">' + money(qu.originalPrice) + '</span> ' + money(qu.unitPrice)
+          : money(qu.unitPrice);
+        return '<div class="line-detail" style="' + (isWinner ? 'font-weight:600;' : '') + '"><span>' + esc(qu.supplierName) + (isWinner ? ' \u2713' : '') + '</span><span class="sub" style="display:flex;align-items:center;gap:8px;">' + priceHtml + ' / ' + esc(q.uom) + pickBtn + '</span></div>';
+      }).join('');
+      var head = '<div class="row" style="align-items:flex-start;"><div><strong>' + esc(q.qcsNumber) + '</strong> &middot; ' + esc(q.itemDesc) + (isTestRecord(q) ? '<span class="test-badge">TEST</span>' : '') +
+        '<div class="sub">Qty ' + esc(String(q.qty)) + ' &middot; from ' + esc(q.prNumbers.join(', ')) + '</div></div>' +
+        '<span style="display:flex;align-items:center;gap:8px;">' + statusTag + '<button type="button" class="btn-ghost no-print qcs-print" data-id="' + id + '" style="padding:8px 14px;font-size:12.5px;">Print / PDF</button></span></div>';
+
+      if (existing) {
+        existing.querySelector('.qcs-head').innerHTML = head;
+        existing.querySelector('.qcs-quotes').innerHTML = quotesHtml;
+        wireQcsPickButtons(existing, id);
+        wireQcsPrintButton(existing, id);
+        var actWrap = existing.querySelector('.qcs-actions');
+        if (actWrap) actWrap.style.display = (q.status === 'draft' || q.status === 'completed') ? 'flex' : 'none';
+        var genWrap = existing.querySelector('.qcs-generate');
+        if (genWrap) genWrap.style.display = q.status === 'completed' ? 'block' : 'none';
+        return;
+      }
+
+      var supplierOptions = Object.keys(suppliers).sort(function (a, b) { return suppliers[a].name.localeCompare(suppliers[b].name); })
+        .map(function (c) { return '<option value="' + esc(c) + '">' + esc(suppliers[c].name) + '</option>'; }).join('');
+
+      var block = document.createElement('div');
+      block.className = 'qcs-block approval-card';
+      block.id = blockId;
+      block.innerHTML =
+        '<div class="qcs-head">' + head + '</div>' +
+        '<div class="qcs-quotes" style="margin:8px 0;">' + quotesHtml + '</div>' +
+        '<div class="qcs-actions" style="display:' + ((q.status === 'draft' || q.status === 'completed') ? 'flex' : 'none') + ';gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">' +
+          '<div style="max-width:200px;"><label>Add supplier quote</label><select class="qcs-sup">' + supplierOptions + '</select></div>' +
+          '<div style="max-width:130px;"><label>Original price (optional)</label><input type="number" step="0.01" min="0" class="qcs-origprice" placeholder="before negotiation"></div>' +
+          '<div style="max-width:120px;"><label>Negotiated price</label><input type="number" step="0.01" min="0" class="qcs-price"></div>' +
+          '<button type="button" class="btn-ghost qcs-addquote">Add quote</button>' +
+          '<button type="button" class="btn-primary qcs-complete">Mark complete</button>' +
+          '<button type="button" class="btn-danger qcs-cancel">Cancel</button>' +
+        '</div>' +
+        '<div class="qcs-generate" style="display:' + (q.status === 'completed' ? 'block' : 'none') + ';">' +
+          '<button type="button" class="btn-primary qcs-genpo">Generate PO from this comparison</button>' +
+        '</div>';
+      els.qcsList.appendChild(block);
+      wireQcsPickButtons(block, id);
+      wireQcsPrintButton(block, id);
+      var addBtn = block.querySelector('.qcs-addquote');
+      if (addBtn) addBtn.addEventListener('click', async function () {
+        var supCode = block.querySelector('.qcs-sup').value;
+        var price = Number(block.querySelector('.qcs-price').value);
+        var origInput = block.querySelector('.qcs-origprice').value;
+        var origPrice = origInput ? Number(origInput) : price;
+        if (!supCode || !price) return;
+        var current = qcs[id] || q;
+        var newQuotes = current.quotes.concat([{ supplierCode: supCode, supplierName: (suppliers[supCode] || {}).name || '', unitPrice: price, originalPrice: origPrice }]);
+        try {
+          await db.collection('quote_comparisons').doc(id).update({ quotes: newQuotes });
+          block.querySelector('.qcs-price').value = ''; block.querySelector('.qcs-origprice').value = '';
+        } catch (e) {}
+      });
+      var completeBtn = block.querySelector('.qcs-complete');
+      if (completeBtn) completeBtn.addEventListener('click', async function () {
+        var current = qcs[id] || q;
+        if (current.selectedIdx == null || !current.quotes.length) return;
+        try { await db.collection('quote_comparisons').doc(id).update({ status: 'completed' }); } catch (e) {}
+      });
+      var cancelBtn = block.querySelector('.qcs-cancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', async function () {
+        try { await db.collection('quote_comparisons').doc(id).update({ status: 'cancelled' }); } catch (e) {}
+      });
+      var genBtn = block.querySelector('.qcs-genpo');
+      if (genBtn) genBtn.addEventListener('click', function () {
+        var current = qcs[id];
+        var winner = current.quotes[current.selectedIdx];
+        if (!winner) return;
+        generatePO(current.itemCode, current.qty, current.lineIds, null, winner.supplierCode, current.prNumbers, { id: id, number: current.qcsNumber }, winner.unitPrice, winner.originalPrice);
+      });
+    });
+  }
+
+  // ---- manage items ----
+  var editingItemCode = null;
+  els.editItemPick.addEventListener('change', function () {
+    var code = matchItem(els.editItemPick.value);
+    if (!code || !items[code]) { els.itemEditForm.style.display = 'none'; editingItemCode = null; return; }
+    editingItemCode = code;
+    var it = items[code];
+    document.getElementById('ei_desc').value = it.description || '';
+    document.getElementById('ei_cat').value = it.category || 'Food';
+    document.getElementById('ei_ptype').value = it.procurementType || 'Direct';
+    document.getElementById('ei_uom').value = it.uom || '';
+    document.getElementById('ei_price').value = it.unitPrice || 0;
+    document.getElementById('ei_supplier').value = it.supplierCode || '';
+    document.getElementById('ei_msg').textContent = '';
+    els.itemEditForm.style.display = 'block';
+  });
+  document.getElementById('ei_save').addEventListener('click', async function () {
+    if (!editingItemCode || !canWrite) return;
+    var msg = document.getElementById('ei_msg');
+    msg.textContent = 'Saving…';
+    try {
+      await db.collection('items').doc(editingItemCode).update({
+        description: document.getElementById('ei_desc').value.trim(),
+        category: document.getElementById('ei_cat').value,
+        procurementType: document.getElementById('ei_ptype').value,
+        uom: document.getElementById('ei_uom').value.trim(),
+        unitPrice: Number(document.getElementById('ei_price').value) || 0,
+        supplierCode: document.getElementById('ei_supplier').value
+      });
+      msg.textContent = 'Saved.';
+      setTimeout(function () { msg.textContent = ''; }, 2000);
+    } catch (e) { msg.textContent = 'Could not save.'; }
+  });
+  document.getElementById('ni_add').addEventListener('click', async function () {
+    var msg = document.getElementById('ni_msg');
+    var code = document.getElementById('ni_code').value.trim();
+    var desc = document.getElementById('ni_desc').value.trim();
+    if (!code || !desc) { msg.textContent = 'Code and description are required.'; return; }
+    if (items[code]) { msg.textContent = 'That code already exists — pick a different one.'; return; }
+    msg.textContent = 'Adding…';
+    try {
+      await db.collection('items').doc(code).set({
+        description: desc,
+        category: document.getElementById('ni_cat').value,
+        procurementType: document.getElementById('ni_ptype').value,
+        uom: document.getElementById('ni_uom').value.trim(),
+        unitPrice: Number(document.getElementById('ni_price').value) || 0,
+        supplierCode: document.getElementById('ni_supplier').value
+      });
+      msg.textContent = 'Added ' + code + '.';
+      ['ni_code', 'ni_desc', 'ni_uom', 'ni_price'].forEach(function (id) { document.getElementById(id).value = ''; });
+      setTimeout(function () { msg.textContent = ''; }, 2500);
+    } catch (e) { msg.textContent = 'Could not add.'; }
+  });
+
+  // ---- manage suppliers ----
+  var editingSupCode = null;
+  function matchSupplier(typed) {
+    typed = (typed || '').trim();
+    if (!typed) return null;
+    var dashIdx = typed.indexOf(' — ');
+    var code = dashIdx > -1 ? typed.slice(0, dashIdx).trim() : typed;
+    if (suppliers[code]) return code;
+    var lower = typed.toLowerCase();
+    for (var c in suppliers) { if (suppliers[c].name.toLowerCase() === lower) return c; }
+    return null;
+  }
+  els.editSupPick.addEventListener('change', function () {
+    var code = matchSupplier(els.editSupPick.value);
+    if (!code || !suppliers[code]) { els.supEditForm.style.display = 'none'; editingSupCode = null; return; }
+    editingSupCode = code;
+    var s = suppliers[code];
+    document.getElementById('es_name').value = s.name || '';
+    document.getElementById('es_cat').value = s.category || 'Food';
+    document.getElementById('es_contact').value = s.contact || '';
+    document.getElementById('es_term').value = s.paymentTerm || '';
+    document.getElementById('es_msg').textContent = '';
+    els.supEditForm.style.display = 'block';
+  });
+  document.getElementById('es_save').addEventListener('click', async function () {
+    if (!editingSupCode || !canWrite) return;
+    var msg = document.getElementById('es_msg');
+    msg.textContent = 'Saving…';
+    try {
+      await db.collection('suppliers').doc(editingSupCode).update({
+        name: document.getElementById('es_name').value.trim(),
+        category: document.getElementById('es_cat').value,
+        contact: document.getElementById('es_contact').value.trim(),
+        paymentTerm: document.getElementById('es_term').value.trim()
+      });
+      msg.textContent = 'Saved.';
+      setTimeout(function () { msg.textContent = ''; }, 2000);
+    } catch (e) { msg.textContent = 'Could not save.'; }
+  });
+  document.getElementById('nsup_add').addEventListener('click', async function () {
+    var msg = document.getElementById('nsup_msg');
+    var name = document.getElementById('nsup_name').value.trim();
+    if (!name) { msg.textContent = 'Name is required.'; return; }
+    var nextN = Object.keys(suppliers).length + 1;
+    var code = 'SUP-' + String(nextN).padStart(4, '0');
+    while (suppliers[code]) { nextN++; code = 'SUP-' + String(nextN).padStart(4, '0'); }
+    msg.textContent = 'Adding…';
+    try {
+      await db.collection('suppliers').doc(code).set({
+        name: name,
+        category: document.getElementById('nsup_cat').value,
+        contact: document.getElementById('nsup_contact').value.trim(),
+        paymentTerm: document.getElementById('nsup_term').value.trim()
+      });
+      msg.textContent = 'Added as ' + code + '.';
+      ['nsup_name', 'nsup_contact', 'nsup_term'].forEach(function (id) { document.getElementById(id).value = ''; });
+      setTimeout(function () { msg.textContent = ''; }, 2500);
+    } catch (e) { msg.textContent = 'Could not add.'; }
+  });
+
+  // ---- bulk CSV upload ----
+  function parseCsv(text) {
+    var lines = text.split(/\r\n|\n/).filter(function (l) { return l.trim().length; });
+    return lines.map(function (line) {
+      var cells = [], cur = '', inQ = false;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inQ) {
+          if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (ch === '"') { inQ = false; }
+          else cur += ch;
+        } else {
+          if (ch === '"') inQ = true;
+          else if (ch === ',') { cells.push(cur); cur = ''; }
+          else cur += ch;
+        }
+      }
+      cells.push(cur);
+      return cells.map(function (c) { return c.trim(); });
+    });
+  }
+  function readFileText(file) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = reject;
+      r.readAsText(file);
+    });
+  }
+
+  var pendingItemImport = null;
+  document.getElementById('bulkItemsFile').addEventListener('change', async function () {
+    var file = this.files[0];
+    var prev = document.getElementById('bulkItemsPreview');
+    var btn = document.getElementById('bulkItemsConfirm');
+    if (!file) return;
+    var rows = parseCsv(await readFileText(file));
+    rows.shift(); // drop header row
+    var parsed = [], newCount = 0, updateCount = 0, unresolvedSupplier = 0;
+    rows.forEach(function (r) {
+      if (!r[0]) return;
+      var code = r[0];
+      var isNew = !items[code];
+      var patch = {};
+      if (r[1]) patch.description = r[1];
+      if (r[2]) patch.category = r[2];
+      if (r[3]) patch.procurementType = r[3];
+      if (r[4]) patch.uom = r[4];
+      if (r[5] && !isNaN(Number(r[5])) && Number(r[5]) > 0) patch.unitPrice = Number(r[5]);
+      var supName = (r[6] || '').trim();
+      if (supName) {
+        var found = Object.keys(suppliers).filter(function (c) { return suppliers[c].name.toLowerCase() === supName.toLowerCase(); });
+        if (found.length) patch.supplierCode = found[0]; else unresolvedSupplier++;
+      }
+      if (isNew && !patch.description) return; // a brand-new row needs at least a description
+      if (isNew) newCount++; else updateCount++;
+      parsed.push({ code: code, isNew: isNew, patch: patch });
+    });
+    pendingItemImport = parsed;
+    prev.textContent = parsed.length + ' rows ready \u2014 ' + newCount + ' new, ' + updateCount + ' will merge into existing codes (blank cells left untouched)' +
+      (unresolvedSupplier ? ', ' + unresolvedSupplier + ' with a supplier name that doesn\'t match any on file (left unset)' : '') + '.';
+    btn.style.display = parsed.length && canWrite ? 'inline-block' : 'none';
+  });
+  document.getElementById('bulkItemsConfirm').addEventListener('click', async function () {
+    if (!pendingItemImport || !pendingItemImport.length) return;
+    var prev = document.getElementById('bulkItemsPreview');
+    this.disabled = true;
+    for (var i = 0; i < pendingItemImport.length; i++) {
+      var row = pendingItemImport[i];
+      prev.textContent = 'Importing ' + (i + 1) + ' of ' + pendingItemImport.length + '…';
+      try {
+        if (row.isNew) {
+          await db.collection('items').doc(row.code).set(Object.assign({
+            description: '', category: 'Food', procurementType: 'Direct', uom: '', unitPrice: 0, supplierCode: ''
+          }, row.patch));
+        } else if (Object.keys(row.patch).length) {
+          await db.collection('items').doc(row.code).update(row.patch);
+        }
+      } catch (e) {}
+    }
+    prev.textContent = 'Imported ' + pendingItemImport.length + ' items \u2014 existing items only had their filled-in fields changed.';
+    pendingItemImport = null;
+    this.style.display = 'none';
+    document.getElementById('bulkItemsFile').value = '';
+  });
+
+  var pendingSupImport = null;
+  document.getElementById('bulkSupFile').addEventListener('change', async function () {
+    var file = this.files[0];
+    var prev = document.getElementById('bulkSupPreview');
+    var btn = document.getElementById('bulkSupConfirm');
+    if (!file) return;
+    var rows = parseCsv(await readFileText(file));
+    rows.shift();
+    var parsed = [], newCount = 0, updateCount = 0, nextN = Object.keys(suppliers).length + 1;
+    rows.forEach(function (r) {
+      var code = r[0];
+      var isNew = !code || !suppliers[code];
+      if (isNew && !r[1]) return; // a brand-new row needs at least a name
+      if (!code) {
+        code = 'SUP-' + String(nextN).padStart(4, '0');
+        while (suppliers[code]) { nextN++; code = 'SUP-' + String(nextN).padStart(4, '0'); }
+        nextN++;
+      }
+      var patch = {};
+      if (r[1]) patch.name = r[1];
+      if (r[2]) patch.category = r[2];
+      if (r[3]) patch.contact = r[3];
+      if (r[4]) patch.paymentTerm = r[4];
+      if (isNew) newCount++; else updateCount++;
+      parsed.push({ code: code, isNew: isNew, patch: patch });
+    });
+    pendingSupImport = parsed;
+    prev.textContent = parsed.length + ' rows ready \u2014 ' + newCount + ' new, ' + updateCount + ' will merge into existing codes (blank cells left untouched).';
+    btn.style.display = parsed.length && canWrite ? 'inline-block' : 'none';
+  });
+  document.getElementById('bulkSupConfirm').addEventListener('click', async function () {
+    if (!pendingSupImport || !pendingSupImport.length) return;
+    var prev = document.getElementById('bulkSupPreview');
+    this.disabled = true;
+    for (var i = 0; i < pendingSupImport.length; i++) {
+      var row = pendingSupImport[i];
+      prev.textContent = 'Importing ' + (i + 1) + ' of ' + pendingSupImport.length + '…';
+      try {
+        if (row.isNew) {
+          await db.collection('suppliers').doc(row.code).set(Object.assign({ name: '', category: 'Food', contact: '', paymentTerm: '' }, row.patch));
+        } else if (Object.keys(row.patch).length) {
+          await db.collection('suppliers').doc(row.code).update(row.patch);
+        }
+      } catch (e) {}
+    }
+    prev.textContent = 'Imported ' + pendingSupImport.length + ' suppliers \u2014 existing suppliers only had their filled-in fields changed.';
+    pendingSupImport = null;
+    this.style.display = 'none';
+    document.getElementById('bulkSupFile').value = '';
+  });
+
+  // ---- approval roles ----
+  var approvalRoles = { financeEmail: '', ceoEmail: '', supplyChainEmail: '', hodByStore: {}, testingMode: true };
+  var rolesDoc = db.collection('settings').doc('approval_roles');
+  rolesDoc.onSnapshot(function (snap) {
+    var d = (snap.exists && snap.data()) || {};
+    approvalRoles = {
+      financeEmail: d.financeEmail || '', ceoEmail: d.ceoEmail || '',
+      supplyChainEmail: d.supplyChainEmail || '', hodByStore: d.hodByStore || {},
+      testingMode: d.testingMode !== false
+    };
+    if (document.activeElement !== document.getElementById('role_finance')) document.getElementById('role_finance').value = approvalRoles.financeEmail;
+    if (document.activeElement !== document.getElementById('role_ceo')) document.getElementById('role_ceo').value = approvalRoles.ceoEmail;
+    if (document.activeElement !== document.getElementById('role_supplychain')) document.getElementById('role_supplychain').value = approvalRoles.supplyChainEmail;
+    var stores = Object.keys(approvalRoles.hodByStore).sort();
+    document.getElementById('hodRows').innerHTML = stores.length
+      ? stores.map(function (s) { return '<div class="line-detail"><span>' + esc(s) + '</span><span class="sub">' + esc(approvalRoles.hodByStore[s]) + '</span></div>'; }).join('')
+      : '<div class="sub">No HOD emails set yet.</div>';
+    var statusEl = document.getElementById('testingModeStatus');
+    var goLiveBtn = document.getElementById('goLiveBtn');
+    if (statusEl) statusEl.textContent = approvalRoles.testingMode ? 'ON — every new record is tagged TEST' : 'OFF — live since go-live, recording real data';
+    if (goLiveBtn) goLiveBtn.style.display = approvalRoles.testingMode ? 'inline-block' : 'none';
+    renderApprovals(); renderPoList(); renderAll();
+  }, function () {});
+
+  function isTestRecord(r) { return !r || r.isTest !== false; }
+
+  document.getElementById('roles_save').addEventListener('click', async function () {
+    var msg = document.getElementById('roles_msg');
+    var payload = {
+      financeEmail: document.getElementById('role_finance').value.trim(),
+      ceoEmail: document.getElementById('role_ceo').value.trim(),
+      supplyChainEmail: document.getElementById('role_supplychain').value.trim()
+    };
+    msg.textContent = 'Saving…';
+    try {
+      try { await rolesDoc.update(payload); }
+      catch (e) { await rolesDoc.set(Object.assign({ hodByStore: {}, testingMode: true }, payload)); }
+      msg.textContent = 'Saved.';
+      setTimeout(function () { msg.textContent = ''; }, 2000);
+    } catch (e) { msg.textContent = 'Could not save.'; }
+  });
+
+  document.getElementById('goLiveBtn').addEventListener('click', async function () {
+    if (!canWrite) return;
+    var ok = window.confirm('Go live now?\n\nThis turns off Testing Mode for good and permanently deletes every PR, PO, comparison sheet, and sample request created so far. This cannot be undone or switched back. Only do this once you\'re genuinely ready for real data.');
+    if (!ok) return;
+    this.disabled = true;
+    this.textContent = 'Going live…';
+    try {
+      try { await rolesDoc.update({ testingMode: false }); } catch (e) { await rolesDoc.set({ hodByStore: {}, testingMode: false }); }
+      var deletions = [];
+      Object.keys(lines).forEach(function (id) { deletions.push(db.collection('pr_lines').doc(id).delete()); });
+      Object.keys(headers).forEach(function (id) { deletions.push(db.collection('pr_headers').doc(id).delete()); });
+      Object.keys(pos).forEach(function (id) { deletions.push(db.collection('po_log').doc(id).delete()); });
+      Object.keys(qcs).forEach(function (id) { deletions.push(db.collection('quote_comparisons').doc(id).delete()); });
+      Object.keys(samples).forEach(function (id) { deletions.push(db.collection('sample_requests').doc(id).delete()); });
+      await Promise.all(deletions.map(function (p) { return p.catch(function () {}); }));
+    } catch (e) {}
+    this.textContent = 'Go Live';
+  });
+
+  document.getElementById('hod_add').addEventListener('click', async function () {
+    var store = document.getElementById('hod_store').value.trim();
+    var email = document.getElementById('hod_email').value.trim();
+    if (!store || !email) return;
+    var patch = {}; patch[store] = email;
+    try { await rolesDoc.update({ hodByStore: patch }); }
+    catch (e) { await rolesDoc.set({ financeEmail: '', ceoEmail: '', supplyChainEmail: '', hodByStore: patch }); }
+    document.getElementById('hod_store').value = '';
+    document.getElementById('hod_email').value = '';
+  });
+
+  document.querySelectorAll('input[name="prTrack"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      var isStore = document.querySelector('input[name="prTrack"]:checked').value === 'store';
+      document.getElementById('storeLabel').textContent = isStore ? 'Store' : 'Department';
+      document.getElementById('store').placeholder = isStore ? 'e.g. KDT outlet, or CDP outlet' : 'e.g. IT, HR, Marketing';
+    });
+  });
+
+  document.getElementById('ct_add').addEventListener('click', async function () {
+    var msg = document.getElementById('ct_msg');
+    var name = document.getElementById('ct_name').value.trim();
+    if (!name) { msg.textContent = 'Contract name is required.'; return; }
+    msg.textContent = 'Adding…';
+    try {
+      await db.collection('contracts').add({
+        name: name,
+        stage: document.getElementById('ct_stage').value,
+        supplierCode: document.getElementById('ct_supplier').value,
+        start: document.getElementById('ct_start').value,
+        expiry: document.getElementById('ct_expiry').value,
+        terms: document.getElementById('ct_terms').value.trim(),
+        pointer: document.getElementById('ct_pointer').value.trim(),
+        createdBy: me.id, createdAt: new Date().toISOString()
+      });
+      ['ct_name', 'ct_start', 'ct_expiry', 'ct_terms', 'ct_pointer'].forEach(function (id) { document.getElementById(id).value = ''; });
+      msg.textContent = 'Added.';
+      setTimeout(function () { msg.textContent = ''; }, 2000);
+    } catch (e) { msg.textContent = 'Could not add.'; }
+  });
+
+  els.printAllContracts.addEventListener('click', function () {
+    if (!requireExportAuth()) return;
+    var ids = Object.keys(contracts);
+    if (!ids.length) return;
+    els.printArea.innerHTML = ids.map(function (id, idx) {
+      var c = contracts[id];
+      var supName = (suppliers[c.supplierCode] && suppliers[c.supplierCode].name) || c.supplierCode || '';
+      return '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;' + (idx < ids.length - 1 ? 'page-break-after:always;' : '') + '">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">CONTRACT &nbsp; ' + esc(c.name) + '</div>' +
+        '<table style="width:100%;font-size:13px;margin-bottom:14px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Supplier</strong><br>' + esc(supName) + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Stage</strong><br>' + esc((STAGE_META[c.stage || 'draft'] || {}).label || c.stage) + '</td>' +
+        '</tr><tr>' +
+          '<td style="vertical-align:top;padding-top:10px;"><strong>Start</strong><br>' + esc(c.start || '\u2014') + '</td>' +
+          '<td style="vertical-align:top;padding-top:10px;"><strong>Expiry</strong><br>' + esc(c.expiry || '\u2014') + '</td>' +
+        '</tr></table>' +
+        (c.terms ? '<div style="font-size:12px;margin-bottom:6px;"><strong>Terms:</strong> ' + esc(c.terms) + '</div>' : '') +
+        (c.pointer ? '<div style="font-size:12px;">\ud83d\udcce ' + esc(c.pointer) + '</div>' : '') +
+      '</div>';
+    }).join('');
+    setTimeout(function () { window.print(); }, 50);
+  });
+  els.downloadAllContracts.addEventListener('click', async function () {
+    if (!requireExportAuth()) return;
+    if (!downloads) return;
+    var rows = [['Contract Name', 'Stage', 'Supplier', 'Start', 'Expiry', 'Terms', 'Document Pointer']];
+    Object.keys(contracts).forEach(function (id) {
+      var c = contracts[id];
+      var supName = (suppliers[c.supplierCode] && suppliers[c.supplierCode].name) || c.supplierCode || '';
+      rows.push([c.name, (STAGE_META[c.stage || 'draft'] || {}).label || c.stage, supName, c.start || '', c.expiry || '', c.terms || '', c.pointer || '']);
+    });
+    var csv = rows.map(function (r) { return r.map(csvEscape).join(','); }).join('\n');
+    try { await downloads.save({ filename: 'tube-cafe-contracts.csv', data: csv }); } catch (e) {}
+  });
+
+  // ---- bulk print / export: PRs ----
+  els.printAllPr.addEventListener('click', async function () {
+    var ids = Object.keys(headers).sort(function (a, b) { return new Date(headers[a].submittedAt) - new Date(headers[b].submittedAt); });
+    if (!ids.length) return;
+    var names = await namesFor(ids.map(function (id) { return headers[id].requesterId; }));
+    els.printArea.innerHTML = ids.map(function (hid, idx) {
+      var h = headers[hid];
+      var hLines = Object.keys(lines).filter(function (lid) { return lines[lid].prHeaderId === hid; });
+      var rows = hLines.map(function (lid) {
+        var l = lines[lid];
+        var statusLabel = { pending: 'pending', awaiting_approval: 'awaiting approval', cancelled: 'cancelled', converted: 'converted' }[l.lineStatus] || l.lineStatus;
+        return '<tr><td>' + esc(l.itemDesc) + '</td><td>' + esc(String(l.qtyRequested)) + '</td><td>' + esc(statusLabel) + '</td></tr>';
+      }).join('');
+      return '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;' + (idx < ids.length - 1 ? 'page-break-after:always;' : '') + '">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">PURCHASE REQUISITION &nbsp; ' + esc(h.prNumber || '') + '</div>' +
+        '<table style="width:100%;font-size:13px;margin-bottom:18px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>' + (h.track === 'hq' ? 'Department' : 'Store') + '</strong><br>' + esc(h.store) + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Requested by</strong><br>' + esc(names[h.requesterId] || 'Someone') + '<br>' + esc(new Date(h.submittedAt).toDateString()) + '</td>' +
+        '</tr></table>' +
+        (h.purpose ? '<div style="font-size:12px;margin-bottom:8px;"><strong>Purpose/reference:</strong> ' + esc(h.purpose) + '</div>' : '') +
+        (h.referenceImage ? '<div style="font-size:12px;margin-bottom:14px;"><strong>Reference image:</strong> ' + esc(h.referenceImage) + '</div>' : '') +
+        '<table class="report-table" style="width:100%;"><thead><tr><th>Item</th><th>Qty</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '</div>';
+    }).join('');
+    setTimeout(function () { window.print(); }, 50);
+  });
+  els.downloadAllPr.addEventListener('click', async function () {
+    if (!downloads) return;
+    var ids = Object.keys(headers);
+    var names = await namesFor(ids.map(function (id) { return headers[id].requesterId; }));
+    var rows = [['PR Number', 'Track', 'Store/Dept', 'Requester', 'Submitted', 'Total Value', 'Status', 'Purpose/Reference', 'Reference Image']];
+    ids.forEach(function (hid) {
+      var h = headers[hid];
+      rows.push([h.prNumber || '', h.track || 'store', h.store, names[h.requesterId] || '', h.submittedAt, h.totalValue || 0, h.headerStatus, h.purpose || '', h.referenceImage || '']);
+    });
+    var csv = rows.map(function (r) { return r.map(csvEscape).join(','); }).join('\n');
+    try { await downloads.save({ filename: 'tube-cafe-all-prs.csv', data: csv }); } catch (e) {}
+  });
+
+  // ---- bulk print / export: Quote Comparison ----
+  els.printAllQcs.addEventListener('click', function () {
+    if (!requireExportAuth()) return;
+    var ids = Object.keys(qcs).sort(function (a, b) { return new Date(qcs[a].createdAt) - new Date(qcs[b].createdAt); });
+    if (!ids.length) return;
+    els.printArea.innerHTML = ids.map(function (id, idx) {
+      var q = qcs[id];
+      var rows = q.quotes.map(function (qu, i) {
+        var isWinner = q.selectedIdx === i;
+        var hasDiscount = qu.originalPrice && qu.originalPrice > qu.unitPrice;
+        var priceCell = hasDiscount
+          ? '<span style="text-decoration:line-through;color:#8A8371;">' + money(qu.originalPrice) + '</span> ' + money(qu.unitPrice)
+          : money(qu.unitPrice);
+        return '<tr' + (isWinner ? ' style="font-weight:600;"' : '') + '><td>' + esc(qu.supplierName) + (isWinner ? ' (selected)' : '') + '</td><td>' + priceCell + '</td></tr>';
+      }).join('');
+      return '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;' + (idx < ids.length - 1 ? 'page-break-after:always;' : '') + '">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">QUOTE COMPARISON SHEET &nbsp; ' + esc(q.qcsNumber) + '</div>' +
+        '<div style="font-size:11px;color:#6B6558;margin-bottom:14px;">PR: ' + esc((q.prNumbers || []).join(', ')) + '</div>' +
+        '<table style="width:100%;font-size:13px;margin-bottom:18px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Item</strong><br>' + esc(q.itemDesc) + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Qty</strong><br>' + esc(String(q.qty)) + ' ' + esc(q.uom) + '</td>' +
+        '</tr></table>' +
+        '<table class="report-table" style="width:100%;"><thead><tr><th>Supplier</th><th>Unit Price</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<div style="font-size:11px;color:#6B6558;margin-top:14px;">Status: ' + esc(q.status) + '</div>' +
+      '</div>';
+    }).join('');
+    setTimeout(function () { window.print(); }, 50);
+  });
+  els.downloadAllQcs.addEventListener('click', async function () {
+    if (!requireExportAuth()) return;
+    if (!downloads) return;
+    var rows = [['QCS Number', 'Item', 'Qty', 'PR Numbers', 'Supplier', 'Unit Price', 'Original Price', 'Selected', 'Status']];
+    Object.keys(qcs).forEach(function (id) {
+      var q = qcs[id];
+      if (!q.quotes.length) { rows.push([q.qcsNumber, q.itemDesc, q.qty, (q.prNumbers || []).join('; '), '', '', '', '', q.status]); return; }
+      q.quotes.forEach(function (qu, i) {
+        rows.push([q.qcsNumber, q.itemDesc, q.qty, (q.prNumbers || []).join('; '), qu.supplierName, qu.unitPrice, qu.originalPrice || '', q.selectedIdx === i ? 'yes' : '', q.status]);
+      });
+    });
+    var csv = rows.map(function (r) { return r.map(csvEscape).join(','); }).join('\n');
+    try { await downloads.save({ filename: 'tube-cafe-all-quote-comparisons.csv', data: csv }); } catch (e) {}
+  });
+
+  // ---- bulk print / export: POs ----
+  els.printAllPo.addEventListener('click', function () {
+    var ids = Object.keys(pos).sort(function (a, b) { return new Date(pos[a].createdAt) - new Date(pos[b].createdAt); });
+    if (!ids.length) return;
+    els.printArea.innerHTML = ids.map(function (id, idx) {
+      var p = pos[id];
+      return '<div style="font-family:\'IBM Plex Sans\',sans-serif;color:#1C1E22;padding:32px;max-width:680px;margin:0 auto;' + (idx < ids.length - 1 ? 'page-break-after:always;' : '') + '">' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:22px;font-weight:700;">TUBE CAFE CO., LTD.</div>' +
+        '<div style="font-size:12px;color:#6B6558;margin-bottom:22px;">Supply Chain &amp; Procurement Department</div>' +
+        '<div style="font-family:\'Space Grotesk\',sans-serif;font-size:17px;font-weight:600;border-top:2px solid #1C1E22;border-bottom:2px solid #1C1E22;padding:8px 0;margin-bottom:16px;">PURCHASE ORDER &nbsp; ' + esc(p.poNumber) + '</div>' +
+        refLineHtml(p) +
+        '<table style="width:100%;font-size:13px;margin-bottom:18px;"><tr>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Supplier</strong><br>' + esc(p.supplierName) + '</td>' +
+          '<td style="vertical-align:top;width:50%;"><strong>Date</strong><br>' + esc(new Date(p.createdAt).toDateString()) + '</td>' +
+        '</tr></table>' +
+        '<table class="report-table" style="width:100%;"><thead><tr><th>Item Code</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>' +
+          '<tr><td>' + esc(p.itemCode) + '</td><td>' + esc(p.itemDesc) + '</td><td>' + esc(String(p.qty)) + '</td><td>' + money(p.unitPrice) + '</td><td>' + money(p.totalPrice) + '</td></tr>' +
+        '</tbody></table>' +
+        '<div style="text-align:right;font-size:15px;font-weight:600;margin-top:10px;">Grand Total: ' + money(p.totalPrice) + '</div>' +
+        allocationHtml(p) +
+      '</div>';
+    }).join('');
+    setTimeout(function () { window.print(); }, 50);
+  });
+  els.downloadAllPo.addEventListener('click', async function () {
+    if (!downloads) return;
+    var rows = [['PO Number', 'Item', 'Qty', 'Supplier', 'Unit Price', 'Total', 'PR Numbers', 'QCS Number', 'Status', 'Delivered']];
+    Object.keys(pos).forEach(function (id) {
+      var p = pos[id];
+      rows.push([p.poNumber, p.itemDesc, p.qty, p.supplierName, p.unitPrice, p.totalPrice, (p.prNumbers || []).join('; '), p.qcsNumber || '', p.poStatus, p.delivered ? 'yes' : 'no']);
+    });
+    var csv = rows.map(function (r) { return r.map(csvEscape).join(','); }).join('\n');
+    try { await downloads.save({ filename: 'tube-cafe-all-pos.csv', data: csv }); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

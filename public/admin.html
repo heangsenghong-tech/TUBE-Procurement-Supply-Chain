@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>User administration · Tube Procurement</title>
+<meta name="theme-color" content="#FFCD00">
+<link rel="icon" type="image/png" href="/assets/tube-logo.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/shell.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <img src="/assets/tube-logo.png" alt="Tube Coffee">
+    <div>
+      <h1>User administration</h1>
+      <div class="sub">Tube Procurement &amp; Supply Chain</div>
+    </div>
+  </div>
+  <a class="btn-ghost" href="/">&larr; Back to the app</a>
+
+  <form class="card" id="addForm" style="margin-top:16px;">
+    <h2>Add a user</h2>
+    <div class="section-note">Everyone who submits or approves requests needs an account. Give them the temporary password privately; they can change it under their name &rarr; Change password.</div>
+    <div class="two-col">
+      <div class="field"><label for="nu_name">Full name</label><input id="nu_name" type="text" required maxlength="80"></div>
+      <div class="field"><label for="nu_email">Email</label><input id="nu_email" type="email" required></div>
+      <div class="field"><label for="nu_pw">Temporary password (at least 8 characters)</label><input id="nu_pw" type="text" required minlength="8" autocomplete="off"></div>
+      <div class="field"><label>&nbsp;</label><button type="button" class="btn-ghost" id="genPw">Generate a password</button></div>
+    </div>
+    <label class="check"><input type="checkbox" id="nu_proc"> Procurement Workspace access (pricing, suppliers, sourcing)</label>
+    <label class="check"><input type="checkbox" id="nu_exp"> Export Authorization (download/print Price List, Quote Comparison, Contracts)</label>
+    <label class="check"><input type="checkbox" id="nu_admin"> Administrator (can manage users and download backups)</label>
+    <button class="btn-primary" type="submit" id="addBtn" style="margin-top:8px;">Add user</button>
+    <div class="msg" id="addMsg"></div>
+  </form>
+
+  <div class="card">
+    <div class="row"><h2>Users</h2><span class="sub" id="userCount"></span></div>
+    <div class="section-note">Workspace and export access for existing users is managed inside the app, on the Procurement Workspace tab (Team Access and Export Authorization cards).</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Email</th><th>Access</th><th>Status</th><th></th></tr></thead>
+      <tbody id="users"></tbody>
+    </table></div>
+    <div class="msg" id="listMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Backup</h2>
+    <div class="section-note">Downloads a complete copy of the database (every record, user and audit entry) as a single file. Keep it somewhere safe &mdash; it contains all pricing and supplier data.</div>
+    <a class="btn-primary" href="/api/admin/backup" style="text-decoration:none;display:inline-block;">Download backup</a>
+  </div>
+
+  <div class="card">
+    <div class="row"><h2>Activity log</h2><button type="button" class="btn-ghost" id="loadAudit">Show latest 200</button></div>
+    <div class="section-note">Every change to every record, with who made it and when. Records can't be edited or removed from this log.</div>
+    <div class="table-wrap" id="auditWrap" style="display:none;"><table>
+      <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th></tr></thead>
+      <tbody id="audit"></tbody>
+    </table></div>
+  </div>
+</div>
+<script>
+(function () {
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  async function api(method, url, body) {
+    var opts = { method: method, credentials: 'same-origin', headers: {} };
+    if (method !== 'GET') opts.headers['X-Tube-Request'] = '1';
+    if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    var res = await fetch(url, opts);
+    if (res.status === 401) { window.location.href = '/login'; throw new Error('Signed out'); }
+    var json = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(json.error || 'Request failed.');
+    return json;
+  }
+  function randomPassword() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    var a = new Uint32Array(12); crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (n) { return chars[n % chars.length]; }).join('');
+  }
+
+  var meId = null;
+  api('GET', '/api/me').then(function (u) { meId = u.id; load(); });
+
+  document.getElementById('genPw').addEventListener('click', function () {
+    document.getElementById('nu_pw').value = randomPassword();
+  });
+
+  async function load() {
+    var msg = document.getElementById('listMsg');
+    try {
+      var data = await api('GET', '/api/admin/users');
+      document.getElementById('userCount').textContent = data.users.length + ' total';
+      document.getElementById('users').innerHTML = data.users.map(function (u) {
+        var access = [
+          u.isAdmin ? '<span class="tag warn">Admin</span>' : '',
+          u.procurement ? '<span class="tag ok">Workspace</span>' : '',
+          u.exportAuthorized ? '<span class="tag ok">Export</span>' : ''
+        ].filter(Boolean).join(' ') || '<span class="sub">Submit &amp; track</span>';
+        var self = u.id === meId;
+        return '<tr><td>' + esc(u.name) + (self ? ' <span class="sub">(you)</span>' : '') + '</td><td>' + esc(u.email) + '</td><td>' + access + '</td>' +
+          '<td>' + (u.active ? '<span class="tag ok">Active</span>' : '<span class="tag">Disabled</span>') + '</td>' +
+          '<td style="white-space:nowrap;">' +
+            '<button type="button" class="btn-ghost act" data-act="pw" data-id="' + esc(u.id) + '" data-name="' + esc(u.name) + '">Reset password</button> ' +
+            (self ? '' :
+              '<button type="button" class="btn-ghost act" data-act="admin" data-id="' + esc(u.id) + '" data-val="' + (u.isAdmin ? '0' : '1') + '">' + (u.isAdmin ? 'Remove admin' : 'Make admin') + '</button> ' +
+              '<button type="button" class="' + (u.active ? 'btn-danger' : 'btn-ghost') + ' act" data-act="active" data-id="' + esc(u.id) + '" data-val="' + (u.active ? '0' : '1') + '">' + (u.active ? 'Disable' : 'Enable') + '</button>') +
+          '</td></tr>';
+      }).join('');
+      document.querySelectorAll('.act').forEach(function (b) { b.addEventListener('click', onAction); });
+    } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }
+  }
+
+  async function onAction(e) {
+    var b = e.currentTarget, id = b.getAttribute('data-id'), act = b.getAttribute('data-act');
+    var msg = document.getElementById('listMsg');
+    msg.className = 'msg'; msg.textContent = '';
+    try {
+      if (act === 'pw') {
+        var pw = window.prompt('New temporary password for ' + b.getAttribute('data-name') + ' (at least 8 characters):', randomPassword());
+        if (!pw) return;
+        await api('PATCH', '/api/admin/users/' + encodeURIComponent(id), { password: pw });
+        msg.className = 'msg ok'; msg.textContent = 'Password reset. Their other sessions were signed out.';
+      } else if (act === 'admin') {
+        await api('PATCH', '/api/admin/users/' + encodeURIComponent(id), { isAdmin: b.getAttribute('data-val') === '1' });
+      } else if (act === 'active') {
+        var enable = b.getAttribute('data-val') === '1';
+        if (!enable && !window.confirm('Disable this user? They are signed out immediately and can\'t sign in again until re-enabled. Their past records stay.')) return;
+        await api('PATCH', '/api/admin/users/' + encodeURIComponent(id), { active: enable });
+      }
+      load();
+    } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
+  }
+
+  document.getElementById('addForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('addBtn'), msg = document.getElementById('addMsg');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = '';
+    try {
+      await api('POST', '/api/admin/users', {
+        name: document.getElementById('nu_name').value,
+        email: document.getElementById('nu_email').value,
+        password: document.getElementById('nu_pw').value,
+        procurement: document.getElementById('nu_proc').checked,
+        exportAuthorized: document.getElementById('nu_exp').checked,
+        isAdmin: document.getElementById('nu_admin').checked
+      });
+      this.reset();
+      msg.className = 'msg ok'; msg.textContent = 'User added.';
+      load();
+    } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
+    btn.disabled = false;
+  });
+
+  document.getElementById('loadAudit').addEventListener('click', async function () {
+    var data = await api('GET', '/api/admin/audit?limit=200');
+    document.getElementById('auditWrap').style.display = 'block';
+    document.getElementById('audit').innerHTML = data.entries.map(function (a) {
+      var rec = a.collection ? esc(a.collection) + (a.doc_id ? ' / ' + esc(a.doc_id) : '') : '';
+      return '<tr><td style="white-space:nowrap;">' + esc(new Date(a.at).toLocaleString()) + '</td><td>' + esc(a.user_name || 'System') + '</td><td>' + esc(a.action) + '</td><td>' + rec + '</td></tr>';
+    }).join('') || '<tr><td colspan="4" class="sub">No activity yet.</td></tr>';
+  });
+})();
+</script>
+</body>
+</html>

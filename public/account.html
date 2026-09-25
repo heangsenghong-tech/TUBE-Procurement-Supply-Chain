@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My account · Tube Procurement</title>
+<meta name="theme-color" content="#FFCD00">
+<link rel="icon" type="image/png" href="/assets/tube-logo.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/shell.css">
+</head>
+<body>
+<div class="wrap narrow">
+  <div class="hero">
+    <img src="/assets/tube-logo.png" alt="Tube Coffee">
+    <div>
+      <h1>My account</h1>
+      <div class="sub" id="who">&nbsp;</div>
+    </div>
+  </div>
+  <a class="btn-ghost" href="/" style="margin-bottom:16px;">&larr; Back to the app</a>
+  <form class="card" id="pwForm" style="margin-top:16px;">
+    <h2>Change password</h2>
+    <div class="section-note">Changing your password signs you out on every other device.</div>
+    <div class="field"><label for="cur">Current password</label><input id="cur" type="password" autocomplete="current-password" required></div>
+    <div class="field"><label for="pw1">New password (at least 8 characters)</label><input id="pw1" type="password" autocomplete="new-password" required minlength="8"></div>
+    <div class="field"><label for="pw2">Repeat new password</label><input id="pw2" type="password" autocomplete="new-password" required minlength="8"></div>
+    <button class="btn-primary full" type="submit" id="submitBtn">Update password</button>
+    <div class="msg" id="msg"></div>
+  </form>
+</div>
+<script>
+fetch('/api/me', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (u) {
+  document.getElementById('who').textContent = u.name + ' · ' + u.email;
+}).catch(function () {});
+document.getElementById('pwForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  var btn = document.getElementById('submitBtn'), msg = document.getElementById('msg');
+  var pw = document.getElementById('pw1').value;
+  msg.className = 'msg err';
+  if (pw !== document.getElementById('pw2').value) { msg.textContent = 'New passwords do not match.'; return; }
+  btn.disabled = true; msg.textContent = '';
+  try {
+    var res = await fetch('/api/me/password', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-Tube-Request': '1' },
+      body: JSON.stringify({ currentPassword: document.getElementById('cur').value, newPassword: pw })
+    });
+    var json = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(json.error || 'Could not update the password.');
+    this.reset();
+    msg.className = 'msg ok'; msg.textContent = 'Password updated.';
+  } catch (err) { msg.textContent = err.message; }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

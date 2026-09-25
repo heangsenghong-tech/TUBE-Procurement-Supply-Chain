@@ -1,0 +1,13 @@
+{
+  "name": "tube-procurement-supply-chain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tube Cafe Co., Ltd. — Procurement & Supply Chain app, self-hosted.",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning server/server.js",
+    "admin": "node --no-warnings=ExperimentalWarning server/cli.js",
+    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js"
+  }
+}

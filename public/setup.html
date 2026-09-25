@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>First-time setup · Tube Procurement</title>
+<meta name="theme-color" content="#FFCD00">
+<link rel="icon" type="image/png" href="/assets/tube-logo.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/shell.css">
+</head>
+<body>
+<div class="wrap narrow">
+  <div class="hero">
+    <img src="/assets/tube-logo.png" alt="Tube Coffee">
+    <div>
+      <h1>Tube Procurement &amp; Supply Chain</h1>
+      <div class="sub">First-time setup</div>
+    </div>
+  </div>
+  <form class="card" id="setupForm">
+    <h2>Create the administrator account</h2>
+    <div class="section-note">This runs once, on a brand-new installation. The administrator gets Procurement Workspace and Export Authorization access, and adds everyone else from User Administration.</div>
+    <div class="field"><label for="name">Full name</label><input id="name" type="text" autocomplete="name" required maxlength="80"></div>
+    <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="password">Password (at least 8 characters)</label><input id="password" type="password" autocomplete="new-password" required minlength="8"></div>
+    <div class="field"><label for="password2">Repeat password</label><input id="password2" type="password" autocomplete="new-password" required minlength="8"></div>
+    <button class="btn-primary full" type="submit" id="submitBtn">Create administrator</button>
+    <div class="msg err" id="msg"></div>
+  </form>
+</div>
+<script>
+document.getElementById('setupForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  var btn = document.getElementById('submitBtn'), msg = document.getElementById('msg');
+  var pw = document.getElementById('password').value;
+  if (pw !== document.getElementById('password2').value) { msg.textContent = 'Passwords do not match.'; return; }
+  btn.disabled = true; msg.textContent = '';
+  try {
+    var res = await fetch('/api/setup', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-Tube-Request': '1' },
+      body: JSON.stringify({ name: document.getElementById('name').value, email: document.getElementById('email').value, password: pw })
+    });
+    var json = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(json.error || 'Setup failed.');
+    window.location.href = '/';
+  } catch (err) { msg.textContent = err.message; btn.disabled = false; }
+});
+</script>
+</body>
+</html>

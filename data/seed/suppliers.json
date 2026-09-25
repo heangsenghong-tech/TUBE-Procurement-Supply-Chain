@@ -1,0 +1,158 @@
+{
+ "SUP-0001": {
+  "category": "Food",
+  "contact": "099 483 883",
+  "name": "The Cake Factory",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0002": {
+  "category": "Food",
+  "contact": "099 666 653/096 538 888",
+  "name": "Great Partner",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0003": {
+  "category": "Food",
+  "contact": "017 73 76 / 097 499 33 30",
+  "name": "Srey Nea",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0004": {
+  "category": "Food",
+  "contact": "093 366 231",
+  "name": "Penisula",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0005": {
+  "category": "Non-food",
+  "contact": "070 401 206",
+  "name": "ELEPHANT PLASTIC",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0006": {
+  "category": "Food",
+  "contact": "089 658 283",
+  "name": "BONCAFE",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0007": {
+  "category": "Non-food",
+  "contact": "011 555 181",
+  "name": "Community Pharma",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0008": {
+  "category": "Food",
+  "contact": "015 944 772",
+  "name": "GBS",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0009": {
+  "category": "Non-food",
+  "contact": "@vkhveha",
+  "name": "HOSANA",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0010": {
+  "category": "Both",
+  "contact": "069 666 999",
+  "name": "Kofi",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0011": {
+  "category": "Food",
+  "contact": "099 222 156",
+  "name": "Chapter 5",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0012": {
+  "category": "Non-food",
+  "contact": "085 333 071",
+  "name": "Comfy / MC Tissue",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0013": {
+  "category": "Food",
+  "contact": "078 678 466",
+  "name": "LIVCOMO",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0014": {
+  "category": "Non-food",
+  "contact": "070 401 206",
+  "name": "SD Technology",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0015": {
+  "category": "Non-food",
+  "contact": "015 555 933",
+  "name": "SONG HENG GAS",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0016": {
+  "category": "Food",
+  "contact": "",
+  "name": "Matcha",
+  "paymentTerm": ""
+ },
+ "SUP-0017": {
+  "category": "Food",
+  "contact": "016 720 115",
+  "name": "Indugana Cambodia",
+  "paymentTerm": "1 MONTH"
+ },
+ "SUP-0018": {
+  "category": "Food",
+  "contact": "",
+  "name": "BTND (Kirisu)",
+  "paymentTerm": ""
+ },
+ "SUP-0019": {
+  "category": "Food",
+  "contact": "",
+  "name": "REACH SUPPLY",
+  "paymentTerm": "7DAYS"
+ },
+ "SUP-0020": {
+  "category": "Non-food",
+  "contact": "078 955 659",
+  "name": "BORA Green",
+  "paymentTerm": "COD"
+ },
+ "SUP-0021": {
+  "category": "Non-food",
+  "contact": "071 236 8444",
+  "name": "Plastic Seal",
+  "paymentTerm": "COD"
+ },
+ "SUP-0022": {
+  "category": "Non-food",
+  "contact": "096 785 7857",
+  "name": "Mayura Tailor Shop",
+  "paymentTerm": "COD"
+ },
+ "SUP-0023": {
+  "category": "Non-food",
+  "contact": "",
+  "name": "Chantra Computer",
+  "paymentTerm": ""
+ },
+ "SUP-0024": {
+  "category": "Non-food",
+  "contact": "",
+  "name": "DAVID LY",
+  "paymentTerm": ""
+ },
+ "SUP-0025": {
+  "category": "Non-food",
+  "contact": "",
+  "name": "62 PRINT CO., LTD",
+  "paymentTerm": ""
+ },
+ "SUP-0026": {
+  "category": "Non-food",
+  "contact": "",
+  "name": "KT Group",
+  "paymentTerm": ""
+ }
+}
