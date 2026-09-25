@@ -56,7 +56,8 @@ describe('approval matrix — enforced by the server', () => {
     const pr = await req.createPurchaseRequest(w.db, staff, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 30 }] });
     const d = await req.getRequest(w.db, staff, pr.id);
     expect(d.approvals[0]!.steps.map((s) => s.actionLabel)).toEqual(['Reviewed/Acknowledged', 'Reviewed', 'Approved']);
-    expect(d.estimatedTotal).toBeNull(); // requesters never see prices
+    expect(d.estimatedTotal).toBeNull(); // requesters never see prices…
+    expect(JSON.stringify(d)).not.toMatch(/\$/); // …not even the value band in the rule name
 
     await expect(req.actOnRequest(w.db, staff, pr.id, approve)).rejects.toThrow(/own request|waiting for/);
     await expect(req.actOnRequest(w.db, w.people.ceo!, pr.id, approve)).rejects.toThrow(/waiting for/);

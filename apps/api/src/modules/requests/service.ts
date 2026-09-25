@@ -332,7 +332,8 @@ export async function getRequest(db: DbOrTx, actor: Actor, id: string) {
     .from(t.comments).innerJoin(t.users, eq(t.users.id, t.comments.userId))
     .where(and(eq(t.comments.entityType, 'request'), eq(t.comments.entityId, id))).orderBy(asc(t.comments.createdAt));
 
-  const approvals = await approvalHistory(db, 'request', id);
+  // The rule name reveals the value band (e.g. "$100 – $299"), so it's hidden from people who can't see prices.
+  const approvals = (await approvalHistory(db, 'request', id)).map((c) => (showValue ? c : { ...c, ruleName: r.isPettyCash ? 'Petty cash' : 'Approval' }));
   const current = approvals.at(-1);
   const pendingStep = current?.status === 'pending' ? current.steps.find((s) => s.status === 'pending') : undefined;
   let canAct = false;
