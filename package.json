@@ -1,13 +1,23 @@
 {
-  "name": "tube-procurement-supply-chain",
-  "version": "1.0.0",
+  "name": "tube-procurement",
   "private": true,
-  "description": "Tube Cafe Co., Ltd. — Procurement & Supply Chain app, self-hosted.",
-  "license": "UNLICENSED",
-  "engines": { "node": ">=22.5" },
+  "packageManager": "pnpm@10.18.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "start": "node --no-warnings=ExperimentalWarning server/server.js",
-    "admin": "node --no-warnings=ExperimentalWarning server/cli.js",
-    "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js"
+    "dev:api": "pnpm --filter @tube/api dev",
+    "dev:web": "pnpm --filter @tube/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm --filter @tube/api test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @tube/api db:generate",
+    "db:migrate": "pnpm --filter @tube/api db:migrate",
+    "db:seed": "pnpm --filter @tube/api db:seed"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
