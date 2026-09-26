@@ -118,13 +118,14 @@ export async function seedReference(db: Db, opts: SeedOptions) {
     log.push('approval matrix');
   }
 
-  // Service requests: the HOD acknowledges, then Procurement handles them. Added to existing
-  // installations too, unless an administrator already has an active service rule.
+  // Service requests follow the purchase value tiers above; below $100 they aren't petty cash,
+  // so the HOD acknowledges and Procurement handles them. Added to existing installations too,
+  // unless an administrator already has a service rule.
   const serviceRule = await db.select({ id: t.approvalRules.id }).from(t.approvalRules)
     .where(sql`${t.approvalRules.documentKind} = 'request' and ${t.approvalRules.conditions} ->> 'handling' = 'service'`).limit(1);
   if (!serviceRule[0]) {
     const [rule] = await db.insert(t.approvalRules).values({
-      documentKind: 'request', name: 'Service requests — HOD acknowledges', minAmount: 0, maxAmount: null,
+      documentKind: 'request', name: 'Service requests below $100 — HOD acknowledges', minAmount: 0, maxAmount: 100,
       conditions: { handling: 'service' }, priority: 90
     }).returning();
     await db.insert(t.approvalRuleSteps).values({ ruleId: rule!.id, seq: 1, approverType: 'hod', actionLabel: 'Acknowledged' });

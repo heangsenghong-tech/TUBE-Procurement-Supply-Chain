@@ -107,6 +107,7 @@ export function RequestDetailPage() {
           <div style={{ fontSize: 13.5 }}>
             <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>{r.subject}</div>
             <div style={{ whiteSpace: 'pre-wrap' }}>{r.purpose}</div>
+            {r.estimatedTotal != null && <div style={{ marginTop: 10 }}><span className="sub">Estimated cost </span><strong className="num">{money(r.estimatedTotal)}</strong></div>}
             {r.assignee && <div style={{ marginTop: 10 }}><span className="sub">Handled by </span>{r.assignee.name}</div>}
             {r.resolution && <div className="card" style={{ marginTop: 10, background: 'var(--ok-bg)', borderColor: 'transparent' }}><div className="sub">Outcome</div><div style={{ whiteSpace: 'pre-wrap' }}>{r.resolution}</div></div>}
           </div>

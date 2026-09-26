@@ -1,6 +1,7 @@
 // Sign in with Google (OpenID Connect, authorization code + PKCE).
-// Only verified accounts in the company's Google Workspace domain(s) are accepted, and only
-// if an administrator has already added that person — Google proves who they are, the app
+// Only verified accounts in the company's Google Workspace domain(s) — or individually listed
+// exceptions (GOOGLE_ALLOWED_EMAILS) — are accepted, and only if an administrator has already
+// added that person — Google proves who they are, the app
 // decides what they can do.
 import crypto from 'node:crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
@@ -34,7 +35,8 @@ export function authorizationUrl(config: Config, s: OAuthState) {
     code_challenge: challenge,
     code_challenge_method: 'S256',
     prompt: 'select_account',
-    ...(config.allowedDomains.length === 1 ? { hd: config.allowedDomains[0]! } : {})
+    // `hd` narrows Google's account chooser to the Workspace, which would hide listed exceptions.
+    ...(config.allowedDomains.length === 1 && !config.allowedEmails.length ? { hd: config.allowedDomains[0]! } : {})
   }).toString();
   return u.toString();
 }
@@ -70,7 +72,8 @@ export function checkClaims(config: Config, p: Record<string, unknown>, nonce: s
   if (!email || p.email_verified !== true) throw new GoogleSignInError('Your Google email address is not verified.');
   const domain = email.split('@')[1] ?? '';
   const hd = String(p.hd ?? '').toLowerCase();
-  if (!config.allowedDomains.includes(domain) || !config.allowedDomains.includes(hd)) {
+  const listed = config.allowedEmails.includes(email);
+  if (!listed && (!config.allowedDomains.includes(domain) || !config.allowedDomains.includes(hd))) {
     throw new GoogleSignInError('Please sign in with your Tube Cafe Google Workspace account.');
   }
   return { sub: String(p.sub), email, name: String(p.name ?? email) };

@@ -62,7 +62,7 @@ export interface InboxEntry {
 
 export interface ServiceQueueEntry {
   id: string; number: string; status: string; typeName: string; subject: string; orgUnitName: string; requesterName: string;
-  assigneeId: string | null; assigneeName: string | null; isUrgent: boolean; urgentReason: string | null; requiredDate: string | null; submittedAt: string;
+  assigneeId: string | null; assigneeName: string | null; isUrgent: boolean; urgentReason: string | null; requiredDate: string | null; submittedAt: string; estimatedCost: number;
 }
 
 export interface ReviewGroup {

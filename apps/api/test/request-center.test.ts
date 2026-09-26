@@ -168,9 +168,9 @@ describe('urgent requests', () => {
 
 describe('service requests', () => {
   const input = async () => ({ track: 'store' as const, orgUnitId: w.units.KDT!, requestTypeId: await typeId('maintenance'),
-    subject: 'Air-con leaking', description: 'The unit above the bar drips onto the counter.' });
+    subject: 'Air-con leaking', description: 'The unit above the bar drips onto the counter.', estimatedCost: 40 });
 
-  it('HOD acknowledges, then Procurement takes and resolves it — it never touches sourcing', async () => {
+  it('below $100: the HOD acknowledges, then Procurement takes and resolves it — it never touches sourcing', async () => {
     const staff = w.people['kdt.staff']!;
     const sv = await req.createServiceRequest(w.db, staff, await input());
     expect(sv.number).toMatch(/^SV-\d{4}-\d{6}$/);
@@ -215,11 +215,32 @@ describe('service requests', () => {
       name: rule.name, minAmount: 0, maxAmount: null, isPettyCash: false, active: false, conditions: { handling: 'service' },
       steps: [{ approverType: 'hod', actionLabel: 'Acknowledged' }]
     });
+    expect(serviceRequestInput.safeParse({ ...(await input()), estimatedCost: undefined }).success).toBe(false);
     await expect(req.createServiceRequest(w.db, w.people['kdt.staff']!, await input())).rejects.toThrow(/No approval rule/);
     await master.updateApprovalRule(w.db, w.admin, rule.id, {
-      name: rule.name, minAmount: 0, maxAmount: null, isPettyCash: false, active: true, conditions: { handling: 'service' },
+      name: rule.name, minAmount: 0, maxAmount: 100, isPettyCash: false, active: true, conditions: { handling: 'service' },
       steps: [{ approverType: 'hod', actionLabel: 'Acknowledged' }]
     });
+  });
+
+  it('$100 and above: the same value tiers as a purchase, then Procurement\'s service queue', async () => {
+    const store = await req.createServiceRequest(w.db, w.people['kdt.staff']!, { ...(await input()), estimatedCost: 250 });
+    let chain = await chainOf(store.id);
+    expect(chain.ruleName).toBe('Track B — Stores: $100 – $299');
+    await expect(req.actOnRequest(w.db, w.people['kdt.hod']!, store.id, approve)).rejects.toThrow(/waiting for/);
+    for (const who of ['ops.head', 'finhead']) await req.actOnRequest(w.db, w.people[who]!, store.id, approve);
+    const d = await req.getRequest(w.db, w.people['kdt.staff']!, store.id);
+    expect(d.status).toBe('approved');
+    expect(d.isPettyCash).toBe(false);
+    expect(d.estimatedTotal).toBe(250); // the requester sees their own estimate
+    expect((await req.serviceQueue(w.db, w.people.buyer!)).find((x) => x.id === store.id)!.estimatedCost).toBe(250);
+
+    const hq = await req.createServiceRequest(w.db, w.people['hr.staff']!, { track: 'hq', orgUnitId: w.units.HR!,
+      requestTypeId: await typeId('contract_request'), subject: 'Cleaning contract', description: 'Yearly office cleaning', estimatedCost: 1200 });
+    chain = await chainOf(hq.id);
+    expect(chain.ruleName).toBe('Track A — HQ: $300 and above');
+    for (const who of ['hr.hod', 'finhead', 'ceo']) await req.actOnRequest(w.db, w.people[who]!, hq.id, approve);
+    expect((await req.getRequest(w.db, w.admin, hq.id)).status).toBe('approved');
   });
 
   it('validates rule input: a petty cash rule can\'t cover service requests', async () => {

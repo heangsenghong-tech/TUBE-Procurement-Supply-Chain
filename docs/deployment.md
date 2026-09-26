@@ -12,7 +12,10 @@ with Docker, about 2 GB RAM and 20 GB disk, and a name people can reach it by.
 4. Copy the **Client ID** and **Client secret** into `deploy/.env`.
 
 Only verified accounts from `GOOGLE_ALLOWED_DOMAINS` (default `tubecafecambodia.com`) are accepted,
-and only if an administrator has added that email in **Users & Stores**.
+and only if an administrator has added that email in **Users & Stores**. Individual outside
+accounts can be allowed by exact address in `GOOGLE_ALLOWED_EMAILS` — `.env.example` lists
+TAING Pengpheng's Gmail, the authorised Finance proxy. What they can do still comes only from the
+roles assigned to them in the app.
 
 ## 2. Configure and start
 

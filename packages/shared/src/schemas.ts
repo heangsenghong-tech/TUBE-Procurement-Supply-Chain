@@ -57,6 +57,8 @@ export const serviceRequestInput = z.object({
   requestTypeId: id,
   subject: z.string().trim().min(1, 'Add a short subject').max(200),
   description: z.string().trim().min(1, 'Describe what you need').max(3000),
+  // Routes the request through the same value tiers as a purchase (0 when there's no cost).
+  estimatedCost: z.number({ error: 'Enter the estimated cost — 0 if there is none' }).min(0).max(100_000_000),
   requiredDate: isoDate.optional(),
   referenceUrl: httpUrl,
   isUrgent: z.boolean().optional(),
@@ -71,7 +73,7 @@ export const REQUEST_GROUPS = { procurement: 'Procurement', supply_chain: 'Suppl
 export const REQUEST_HANDLING = {
   purchase: 'Purchase — catalog items, approval by value, then sourcing',
   sample: 'Sample — source and evaluate before buying',
-  service: 'Service — a task for Procurement (HOD acknowledges first)'
+  service: 'Service — a task for Procurement, approved by its estimated cost'
 } as const;
 
 export const requestTypeInput = z.object({

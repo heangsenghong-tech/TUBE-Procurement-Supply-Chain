@@ -86,6 +86,15 @@ describe('Google sign-in claims', () => {
     expect(() => checkClaims(cfg, { ...good, email_verified: false }, 'n')).toThrow(/verified/);
     expect(() => checkClaims(cfg, good, 'other-nonce')).toThrow(/mismatch/);
   });
+  it('accepts an individually listed outside account, and only that exact, verified address', () => {
+    const withProxy = { ...cfg, allowedEmails: ['taingpengpheng@gmail.com'] };
+    const proxy = { ...good, email: 'TaingPengpheng@gmail.com', hd: undefined };
+    expect(checkClaims(withProxy, proxy, 'n').email).toBe('taingpengpheng@gmail.com');
+    expect(checkClaims(withProxy, good, 'n').email).toBe('a@tubecafecambodia.com');
+    expect(() => checkClaims(withProxy, { ...proxy, email: 'someone.else@gmail.com' }, 'n')).toThrow(/Workspace/);
+    expect(() => checkClaims(withProxy, { ...proxy, email_verified: false }, 'n')).toThrow(/verified/);
+    expect(() => checkClaims(cfg, proxy, 'n')).toThrow(/Workspace/);
+  });
 });
 
 describe('authorization over HTTP', () => {
@@ -137,7 +146,7 @@ describe('authorization over HTTP', () => {
     const h = await signIn('kdt.staff');
     const maintenance = (await app.inject({ method: 'GET', url: '/api/request-types', headers: h })).json().find((x: { key: string }) => x.key === 'maintenance');
     const res = await app.inject({ method: 'POST', url: '/api/requests/service', headers: h, payload: {
-      track: 'store', orgUnitId: w.units.KDT, requestTypeId: maintenance.id, subject: 'Grinder noisy', description: 'Makes a grinding noise',
+      track: 'store', orgUnitId: w.units.KDT, requestTypeId: maintenance.id, subject: 'Grinder noisy', description: 'Makes a grinding noise', estimatedCost: 30,
       isUrgent: true, urgentReason: 'Morning rush' } });
     expect(res.statusCode).toBe(200);
     expect((await app.inject({ method: 'POST', url: `/api/requests/${res.json().id}/assign`, headers: h, payload: {} })).statusCode).toBe(403);
