@@ -41,6 +41,30 @@ const APPROVAL_MATRIX = [
       { approverType: 'role' as const, roleKey: 'ceo', actionLabel: 'Approved' }] }
 ];
 
+// The request types offered in "+ New Request" (master spec §7). Supply chain and project types
+// arrive with their modules; administrators can add more at any time.
+const REQUEST_TYPES = [
+  { key: 'purchase_request', name: 'Purchase Request', group: 'procurement', handling: 'purchase', sortOrder: 10,
+    description: 'Buy items from the catalog. Under $100 becomes a petty cash record your HOD acknowledges.' },
+  { key: 'new_item_sample', name: 'New Item / Sample Request', group: 'procurement', handling: 'sample', sortOrder: 20,
+    description: 'Not sure yet? Get a sample sourced and tried before buying.' },
+  { key: 'it_procurement', name: 'IT Procurement', group: 'procurement', handling: 'purchase', sortOrder: 30,
+    description: 'Computers, POS hardware, network and software licences from the catalog.' },
+  { key: 'equipment', name: 'Equipment', group: 'procurement', handling: 'purchase', sortOrder: 40,
+    description: 'Coffee machines, grinders, fridges and other equipment.' },
+  { key: 'furniture', name: 'Furniture', group: 'procurement', handling: 'purchase', sortOrder: 50, description: 'Tables, chairs, shelving.' },
+  { key: 'uniform', name: 'Uniform', group: 'procurement', handling: 'purchase', sortOrder: 60, description: 'Aprons, shirts, pants, name badges.' },
+  { key: 'office_supplies', name: 'Office Supplies', group: 'procurement', handling: 'purchase', sortOrder: 70, description: 'Stationery and office consumables.' },
+  { key: 'supplier_request', name: 'Supplier Request', group: 'procurement', handling: 'service', sortOrder: 110,
+    description: 'Ask Procurement to find or onboard a supplier.' },
+  { key: 'price_inquiry', name: 'Price Inquiry', group: 'procurement', handling: 'service', sortOrder: 120,
+    description: 'Ask what something would cost before requesting it.' },
+  { key: 'contract_request', name: 'Contract Request', group: 'procurement', handling: 'service', sortOrder: 130,
+    description: 'Start, renew or change a supplier contract.' },
+  { key: 'maintenance', name: 'Maintenance', group: 'other', handling: 'service', sortOrder: 140,
+    description: 'Arrange a repair or service visit (air-con, machines, facilities).' }
+] as const;
+
 const DEPARTMENTS = [
   ['SCP', 'Supply Chain & Procurement'], ['OPS', 'Operation'], ['MKT', 'Marketing'],
   ['IT', 'IT'], ['HR', 'HR'], ['FIN', 'Finance'], ['MGT', 'Management']
@@ -67,6 +91,9 @@ export async function seedReference(db: Db, opts: SeedOptions) {
 
   await db.insert(t.uoms).values(Object.entries(UOMS).map(([code, name]) => ({ code, name }))).onConflictDoNothing();
 
+  const addedTypes = await db.insert(t.requestTypes).values(REQUEST_TYPES.map((r) => ({ ...r }))).onConflictDoNothing().returning();
+  if (addedTypes.length) log.push(`${addedTypes.length} request types`);
+
   const [{ n: ruleCount }] = await db.select({ n: sql<number>`count(*)::int` }).from(t.approvalRules) as [{ n: number }];
   if (ruleCount === 0) {
     let priority = 100;
@@ -81,6 +108,19 @@ export async function seedReference(db: Db, opts: SeedOptions) {
       }
     }
     log.push('approval matrix');
+  }
+
+  // Service requests: the HOD acknowledges, then Procurement handles them. Added to existing
+  // installations too, unless an administrator already has an active service rule.
+  const serviceRule = await db.select({ id: t.approvalRules.id }).from(t.approvalRules)
+    .where(sql`${t.approvalRules.documentKind} = 'request' and ${t.approvalRules.conditions} ->> 'handling' = 'service'`).limit(1);
+  if (!serviceRule[0]) {
+    const [rule] = await db.insert(t.approvalRules).values({
+      documentKind: 'request', name: 'Service requests — HOD acknowledges', minAmount: 0, maxAmount: null,
+      conditions: { handling: 'service' }, priority: 90
+    }).returning();
+    await db.insert(t.approvalRuleSteps).values({ ruleId: rule!.id, seq: 1, approverType: 'hod', actionLabel: 'Acknowledged' });
+    log.push('service request rule');
   }
 
   const [{ n: unitCount }] = await db.select({ n: sql<number>`count(*)::int` }).from(t.orgUnits) as [{ n: number }];

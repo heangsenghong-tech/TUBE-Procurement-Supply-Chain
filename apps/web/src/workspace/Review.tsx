@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import { api, date, money, qty, unitPrice } from '../lib/api';
-import { Card, Empty, ErrorText, Field, Loading, Modal } from '../lib/ui';
+import { Card, Empty, ErrorText, Field, Loading, Modal, UrgentTag } from '../lib/ui';
 import type { ReviewGroup, Supplier } from '../lib/types';
 
 // Pending PR lines grouped by item across every store, with each contributor. Procurement adjusts
@@ -46,7 +46,7 @@ export function ReviewPanel() {
               <div className="flex justify-between items-start gap-3 flex-wrap">
                 <label className="flex gap-2 items-start" style={{ cursor: 'pointer' }}>
                   <input type="checkbox" checked={!!selected[g.itemId]} onChange={(e) => setSelected((s) => ({ ...s, [g.itemId]: e.target.checked }))} style={{ marginTop: 4 }} />
-                  <span><strong>{g.itemDescription}</strong> <span className="sub">{g.itemCode}</span><br />
+                  <span><strong>{g.itemDescription}</strong> <span className="sub">{g.itemCode}</span>{g.urgent && <UrgentTag />}<br />
                     <span className="sub">Requested {qty(g.totalQty)} {g.uom} · est. {unitPrice(g.estimatedUnitPrice)}/{g.uom} ·{' '}
                       {g.supplierPrices.length ? g.supplierPrices.map((p) => `${p.supplierName} ${unitPrice(p.unitPrice)}`).join(' · ') : 'no supplier on file yet'}</span></span>
                 </label>
@@ -58,7 +58,7 @@ export function ReviewPanel() {
               <div style={{ marginTop: 8 }}>
                 {g.contributors.map((c) => (
                   <div key={c.lineId} className="flex justify-between items-center gap-2" style={{ fontSize: 12.5, padding: '3px 0' }}>
-                    <span className="sub"><Link to={`/requests/${c.requestId}`}>{c.requestNumber}</Link> · {c.unitName} · {c.requesterName}{c.requiredDate ? ` · needed ${date(c.requiredDate)}` : ''}</span>
+                    <span className="sub"><Link to={`/requests/${c.requestId}`}>{c.requestNumber}</Link>{c.isUrgent && <span className="tag tag-bad" style={{ marginLeft: 4 }} title={c.urgentReason ?? ''}>urgent</span>} · {c.unitName} · {c.requesterName}{c.requiredDate ? ` · needed ${date(c.requiredDate)}` : ''}</span>
                     <span className="flex gap-2 items-center"><span>{qty(c.qty)} {g.uom}</span>
                       <button type="button" className="btn-ghost" style={{ padding: '3px 8px', fontSize: 11 }} onClick={() => cancelLine(c.lineId)}>Cancel line</button></span>
                   </div>

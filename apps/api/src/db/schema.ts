@@ -19,7 +19,10 @@ export const track = pgEnum('track', ['store', 'hq']);
 export const procurementType = pgEnum('procurement_type', ['Direct', 'Indirect']);
 export const itemCategory = pgEnum('item_category', ['Food', 'Non-food']);
 export const supplierCategory = pgEnum('supplier_category', ['Food', 'Non-food', 'Both']);
-export const requestKind = pgEnum('request_kind', ['purchase', 'sample']);
+// purchase: catalog items → Procurement sourcing · sample: evaluate before buying ·
+// service: a task for Procurement that isn't an item purchase (new supplier, price inquiry, contract, maintenance)
+export const requestKind = pgEnum('request_kind', ['purchase', 'sample', 'service']);
+export const requestGroup = pgEnum('request_group', ['procurement', 'supply_chain', 'projects', 'other']);
 export const requestStatus = pgEnum('request_status', [
   'pending_approval', 'changes_requested', 'approved', 'in_progress', 'ordered', 'completed', 'rejected', 'cancelled',
   'petty_cash_approved', 'petty_cash_reconciled',
@@ -152,10 +155,31 @@ export const itemSupplierPrices = pgTable('item_supplier_prices', {
 ]);
 
 // ---------------- requests ----------------
+// Request types shown in "+ New Request". Administrators add or retire them; `handling` decides
+// which workflow a type follows.
+export const requestTypes = pgTable('request_types', {
+  id: pk(),
+  key: text('key').notNull().unique(),
+  name: text('name').notNull(),
+  group: requestGroup('group').notNull(),
+  handling: requestKind('handling').notNull(),
+  description: text('description').notNull().default(''),
+  sortOrder: integer('sort_order').notNull().default(100),
+  active: boolean('active').notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt()
+});
+
 export const requests = pgTable('requests', {
   id: pk(),
   number: text('number').notNull().unique(),
   kind: requestKind('kind').notNull(),
+  requestTypeId: uuid('request_type_id').notNull().references(() => requestTypes.id),
+  isUrgent: boolean('is_urgent').notNull().default(false),
+  urgentReason: text('urgent_reason'),
+  // Service requests: who in Procurement is handling it, and the outcome.
+  assigneeId: uuid('assignee_id').references(() => users.id),
+  resolution: text('resolution'),
   track: track('track').notNull(),
   orgUnitId: uuid('org_unit_id').notNull().references(() => orgUnits.id),
   requesterId: uuid('requester_id').notNull().references(() => users.id),
@@ -183,7 +207,10 @@ export const requests = pgTable('requests', {
   index('requests_requester_idx').on(t.requesterId),
   index('requests_org_unit_idx').on(t.orgUnitId),
   index('requests_status_idx').on(t.status),
-  check('requests_petty_cash_purchase', sql`not ${t.isPettyCash} or ${t.kind} = 'purchase'`)
+  index('requests_type_idx').on(t.requestTypeId),
+  check('requests_petty_cash_purchase', sql`not ${t.isPettyCash} or ${t.kind} = 'purchase'`),
+  check('requests_urgent_reason', sql`not ${t.isUrgent} or ${t.urgentReason} is not null`),
+  check('requests_petty_cash_not_urgent', sql`not (${t.isPettyCash} and ${t.isUrgent})`)
 ]);
 
 export const requestLines = pgTable('request_lines', {

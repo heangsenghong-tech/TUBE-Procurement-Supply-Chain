@@ -7,7 +7,7 @@ export function companyYear(date = new Date()) {
   return Number(new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Asia/Phnom_Penh' }).format(date));
 }
 
-export async function nextNumber(db: DbOrTx, prefix: 'PR' | 'SR' | 'QCS' | 'PO' | 'CT', date = new Date()) {
+export async function nextNumber(db: DbOrTx, prefix: 'PR' | 'SR' | 'SV' | 'QCS' | 'PO' | 'CT', date = new Date()) {
   const year = companyYear(date);
   const rows = await db.execute<{ last_value: number }>(sql`
     insert into document_sequences (prefix, year, last_value) values (${prefix}, ${year}, 1)

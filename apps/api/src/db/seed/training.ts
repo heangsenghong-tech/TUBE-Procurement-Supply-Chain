@@ -129,7 +129,24 @@ export async function seedTraining(db: Db) {
     }] });
   }
 
-  // 9) A contract in the register.
+  // 9) Service requests: one waiting for Procurement, one being handled.
+  const typeOf = async (key: string) => (await db.query.requestTypes.findFirst({ where: eq(t.requestTypes.key, key) }))!.id;
+  const sv1 = await req.createServiceRequest(db, kdtStaff, { track: 'store', orgUnitId: unit('KDT').id, requestTypeId: await typeOf('maintenance'),
+    subject: 'Air-con leaking above the bar', description: 'Water drips onto the counter near the espresso machine every afternoon.',
+    isUrgent: true, urgentReason: 'Water near electrical equipment' });
+  await req.actOnRequest(db, await as('kdt.manager'), sv1.id, { action: 'approve' });
+  const sv2 = await req.createServiceRequest(db, await as('ops.head'), { track: 'hq', orgUnitId: unit('OPS').id, requestTypeId: await typeOf('supplier_request'),
+    subject: 'Second supplier for fresh milk', description: 'We rely on one milk supplier. Please find a backup that can deliver to all stores by 7am.' });
+  // Operation's HOD raised it, so the Supply Chain Manager acknowledges it as a recorded override.
+  await req.actOnRequest(db, await as('scm'), sv2.id, { action: 'approve' });
+  await req.assignServiceRequest(db, buyer, sv2.id);
+
+  // 10) An urgent purchase waiting for approval.
+  await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Grinder burrs worn out',
+    requestTypeId: await typeOf('equipment'), isUrgent: true, urgentReason: 'Grinder failing — can\'t serve espresso',
+    lines: [{ itemId: await item('GEN-001'), qty: 1 }] });
+
+  // 11) A contract in the register.
   await master.upsertContract(db, await as('scm'), null, { name: 'Coffee bean supply agreement', supplierId: other!.id, stage: 'signed',
     startDate: '2026-01-01', expiryDate: '2026-12-31', keyTerms: '1 month payment term; price fixed for 6 months', documentPointer: 'Google Drive > Contracts > Demo' });
 

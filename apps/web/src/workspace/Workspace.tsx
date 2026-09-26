@@ -12,11 +12,14 @@ import { PettyCashPanel } from './PettyCash';
 import { ApprovalRulesPanel } from './ApprovalRules';
 import { PeoplePanel } from './People';
 import { AuditPanel } from './Audit';
+import { ServiceQueuePanel } from './ServiceQueue';
+import { RequestTypesPanel } from './RequestTypes';
 
 interface Tile { key: string; icon: string; label: string; desc: string; tone: string; perm: Permission; anyOf?: Permission[]; Panel: () => React.JSX.Element }
 
 const TILES: Tile[] = [
   { key: 'review', icon: '📋', label: 'Review & Consolidate', desc: 'Group requests by item, adjust qty', tone: 'c-yellow', perm: 'procurement.operate', Panel: ReviewPanel },
+  { key: 'service', icon: '🛠️', label: 'Service Requests', desc: 'Suppliers, prices, contracts, maintenance', tone: 'c-green', perm: 'procurement.operate', Panel: ServiceQueuePanel },
   { key: 'qcs', icon: '📊', label: 'Quote Comparison', desc: 'Compare suppliers, pick a winner', tone: 'c-blue', perm: 'procurement.operate', Panel: QcsListPanel },
   { key: 'pos', icon: '📄', label: 'Purchase Orders', desc: 'Approve, print, deliver', tone: 'c-green', perm: 'po.view', Panel: PoListPanel },
   { key: 'monthly', icon: '📈', label: 'Monthly Summary', desc: 'Leadership reporting, savings', tone: 'c-rose', perm: 'spend.view', Panel: MonthlySummaryPanel },
@@ -25,6 +28,7 @@ const TILES: Tile[] = [
   { key: 'contracts', icon: '📑', label: 'Contracts', desc: 'Expiry tracking, not documents', tone: 'c-rose', perm: 'contract.view', Panel: ContractsPanel },
   { key: 'petty-cash', icon: '🧾', label: 'Petty Cash', desc: 'Match to physical invoices', tone: 'c-green', perm: 'pettycash.view', Panel: PettyCashPanel },
   { key: 'rules', icon: '🔑', label: 'Approval Rules', desc: 'Who approves what, from how much', tone: 'c-green', perm: 'settings.manage', Panel: ApprovalRulesPanel },
+  { key: 'request-types', icon: '📝', label: 'Request Types', desc: 'What + New Request offers', tone: 'c-blue', perm: 'settings.manage', Panel: RequestTypesPanel },
   { key: 'people', icon: '👥', label: 'Users & Stores', desc: 'Accounts, roles, HODs', tone: 'c-yellow', perm: 'users.manage', anyOf: ['users.manage', 'master.manage'], Panel: PeoplePanel },
   { key: 'audit', icon: '🕘', label: 'Activity Log', desc: 'Who did what, when', tone: 'c-blue', perm: 'audit.view', Panel: AuditPanel }
 ];

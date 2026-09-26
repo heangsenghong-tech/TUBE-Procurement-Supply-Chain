@@ -27,7 +27,11 @@ export async function dashboard(db: DbOrTx, actor: Actor) {
         (select count(*)::int from purchase_orders where status = 'approved') as "awaitingDelivery",
         (select count(*)::int from purchase_orders where status = 'approved' and expected_delivery_date < current_date) as "overdueDeliveries",
         (select count(*)::int from requests where status = 'completed') as "completedRequests",
-        (select count(distinct org_unit_id)::int from requests where submitted_at > now() - interval '30 days') as "activeUnits30d"`);
+        (select count(distinct org_unit_id)::int from requests where submitted_at > now() - interval '30 days') as "activeUnits30d",
+        (select count(*)::int from requests where kind = 'service' and status in ('approved', 'in_progress')) as "serviceQueue",
+        -- Master spec "Emergency Purchase %": urgent share of purchase requests in the last 30 days.
+        (select coalesce(round(100.0 * count(*) filter (where is_urgent) / nullif(count(*), 0)), 0)::int
+           from requests where kind = 'purchase' and not is_petty_cash and submitted_at > now() - interval '30 days') as "urgentPct30d"`);
     Object.assign(out, c);
   }
   if (can(actor, 'pettycash.view')) {

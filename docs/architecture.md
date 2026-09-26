@@ -15,6 +15,7 @@ look, and moves it onto a real backend where **every rule is enforced by the ser
 | 6 | **Sign in with Google** (Google Workspace), no passwords. Only people an administrator has added can sign in. |
 | 7 | Supplier contact file to follow; the master was seeded from the live prototype (160 items, 26 suppliers). |
 | 8 | Hosting undecided — Docker Compose deploys identically to a company server or a VPS. |
+| 9 | "Urgent Purchase" is an **urgent flag with a reason** on any purchase or service request, rather than a separate type, so urgent IT, equipment or maintenance requests keep their own type and rules. |
 
 Carried over deliberately from the handoff:
 - **No automatic PO.** A person selects the winning quote; a person clicks Generate PO.
@@ -66,9 +67,33 @@ scripts/       backup.sh · restore.sh
    sees everything. Prices, estimated values and supplier identities are removed from responses
    for people without `pricing.view` / `supplier.view` — including the approval rule's value band.
 
+### Request Center
+**+ New Request** offers the active `request_types`, grouped as in master spec §7. Each type follows
+one workflow (`handling`), and administrators add or retire types in **Request Types**:
+
+| Workflow | Seeded types | Flow |
+|---|---|---|
+| purchase | Purchase Request, IT Procurement, Equipment, Furniture, Uniform, Office Supplies | Catalog items → approval by value (or petty cash) → Review & Consolidate → QCS/PO |
+| sample | New Item / Sample Request | Sourcing → evaluation (Pass/Fail loop) |
+| service | Supplier Request, Price Inquiry, Contract Request, Maintenance | HOD acknowledges → Procurement's **Service Requests** queue → taken by a buyer → resolved with an outcome the requester sees |
+
+Supply chain and project types arrive with their modules. A type's key and workflow are frozen
+once it has requests. Any purchase or service request can be marked **urgent** (with a reason).
+Urgent items go first in approvers' inboxes, Review & Consolidate and the service queue, and feed
+the dashboard's "urgent purchases %". Urgency is dropped for petty cash, which is paid on the spot.
+
 ### Approval engine
-Rules (`approval_rules` + `approval_rule_steps`) are chosen by document kind and amount, with
-optional conditions; they're editable in **Approval Rules**. The chosen rule's steps are copied
+Rules (`approval_rules` + `approval_rule_steps`) are chosen by document kind and amount, plus
+optional conditions, and they're editable in **Approval Rules**:
+- Request rules: workflow (purchase/service), request types, store vs HQ, specific stores/departments,
+  item categories (every line), Direct/Indirect (every line), urgency.
+- PO rules: item categories, Direct/Indirect, urgency (a PO is urgent if any request it fulfils is).
+
+The most specific matching rule wins; ties go to the lower priority number. Petty cash rules only
+ever apply to purchase requests, so a service request can never fall into petty cash. Two active
+rules with identical conditions and overlapping amounts are refused. Rules are switched off, never
+deleted. **Who would approve this?** previews the chain, with real approver names, before anyone
+submits. The chosen rule's steps are copied
 into an `approval_instance` so later edits don't change approvals already under way. A step is
 either the requesting unit's **HOD** (resolved live from `org_units.hod_user_id`) or a **role**
 (`finance_head`, `ceo`, `supply_chain_manager`, …). Nobody approves their own document. If a step
@@ -92,7 +117,7 @@ Warehouse · Store/Department User · Export Authorization. Each is a bundle of 
 
 - **Organisation:** `org_units` (stores & departments, ownership, HOD) · `users` · `roles` · `role_permissions` · `user_roles` · `sessions`
 - **Master data:** `items` (code, category, direct/indirect, UOM, estimated cost, reference flag) · `uoms` (normalised) · `suppliers` · `item_supplier_prices` (primary/backup rank; superseded prices kept as history)
-- **Requests:** `requests` (purchase or sample; petty cash flag; kind-specific details) · `request_lines` · `comments`
+- **Requests:** `request_types` · `requests` (purchase, sample or service; type; petty cash and urgent flags; service assignee and outcome; kind-specific details) · `request_lines` · `comments`
 - **Approvals:** `approval_rules` · `approval_rule_steps` · `approval_instances` · `approval_steps` (who acted, when, override, comment)
 - **Sourcing:** `quote_comparisons` · `qcs_items` · `qcs_item_lines` (consolidated PR lines) · `quotations` (asking vs negotiated) · `qcs_selections` (every pick, superseded or active)
 - **Purchasing:** `purchase_orders` · `po_lines` (unit, asking and last-paid price → savings & avoidance) · `po_line_allocations` (store allocation)

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useParams } from 'react-router';
 import { SAMPLE_EVALUATION_STATUSES, REQUEST_STATUSES } from '@tube/shared';
 import { api, date, dateTime, money, qty, unitPrice } from '../lib/api';
-import { ApprovalActions, ApprovalSteps, Card, ErrorText, Field, Letterhead, Loading, Modal, StatusTag } from '../lib/ui';
+import { ApprovalActions, ApprovalSteps, Card, ErrorText, Field, Letterhead, Loading, Modal, StatusTag, UrgentTag } from '../lib/ui';
 import type { RequestDetail } from '../lib/types';
 
 // "Where is my request?" — so nobody has to message Procurement to ask.
@@ -18,6 +18,16 @@ function Tracker({ r }: { r: RequestDetail }) {
       { label: 'Evaluation', state: s === 'sourcing' ? 'future' : done ? 'done' : 'current' },
       { label: done ? REQUEST_STATUSES[s as 'pass'] : 'Result', state: s === 'pass' ? 'done' : done ? 'bad' : 'future' }
     ];
+  } else if (r.kind === 'service') {
+    const ackd = !['pending_approval', 'changes_requested', 'rejected', 'cancelled'].includes(s);
+    steps = [
+      { label: 'Submitted', state: 'done' },
+      { label: 'HOD acknowledgement', state: s === 'rejected' ? 'bad' : ackd ? 'done' : 'current' },
+      { label: 'With Procurement', state: !ackd ? 'future' : s === 'approved' ? 'current' : 'done' },
+      { label: r.assignee ? `Handled by ${r.assignee.name}` : 'Being handled', state: s === 'in_progress' ? 'current' : s === 'completed' ? 'done' : 'future' },
+      { label: 'Completed', state: s === 'completed' ? 'done' : 'future' }
+    ];
+    if (s === 'cancelled') steps = [{ label: 'Submitted', state: 'done' }, { label: 'Cancelled', state: 'bad' }];
   } else if (r.isPettyCash) {
     steps = [
       { label: 'Submitted', state: 'done' },
@@ -59,7 +69,7 @@ export function RequestDetailPage() {
   const qc = useQueryClient();
   const { data: r, error, isLoading } = useQuery({ queryKey: ['request', id], queryFn: () => api.get<RequestDetail>(`/api/requests/${id}`) });
   const [busy, setBusy] = useState(false);
-  const [modal, setModal] = useState<null | 'cancel' | 'evaluate' | 'reconcile'>(null);
+  const [modal, setModal] = useState<null | 'cancel' | 'evaluate' | 'reconcile' | 'resolve'>(null);
   const [comment, setComment] = useState('');
   const [actionError, setActionError] = useState<unknown>(null);
 
@@ -83,16 +93,24 @@ export function RequestDetailPage() {
         </div>
       )}
       <Card
-        title={<span>{r.number} {r.isPettyCash && <span className="tag tag-petty">Petty cash</span>}</span>}
-        note={`${r.kind === 'sample' ? 'Sample request' : r.track === 'store' ? 'Store purchase request' : 'HQ purchase request'} · ${r.orgUnit.name} · ${r.requester.name} · ${dateTime(r.submittedAt)}`}
+        title={<span>{r.number} {r.isPettyCash && <span className="tag tag-petty">Petty cash</span>}{r.isUrgent && <UrgentTag reason={r.urgentReason} />}</span>}
+        note={`${r.requestType.name} · ${r.track === 'store' ? 'Store' : 'HQ'} · ${r.orgUnit.name} · ${r.requester.name} · ${dateTime(r.submittedAt)}`}
         actions={<>
           <StatusTag status={r.status} />
           <button className="btn-ghost" onClick={() => window.print()}>Print / PDF</button>
         </>}>
-        <Letterhead title={`${r.kind === 'sample' ? 'SAMPLE REQUEST' : 'PURCHASE REQUISITION'}   ${r.number}`} />
+        <Letterhead title={`${r.kind === 'sample' ? 'SAMPLE REQUEST' : r.kind === 'service' ? 'SERVICE REQUEST' : 'PURCHASE REQUISITION'}   ${r.number}`} />
         <div className="no-print" style={{ marginBottom: 14 }}><Tracker r={r} /></div>
+        {r.isUrgent && <div className="banner" style={{ background: 'var(--bad-bg)', color: 'var(--bad-ink)' }}><strong>Urgent:</strong> {r.urgentReason}</div>}
 
-        {r.kind === 'purchase' ? (
+        {r.kind === 'service' ? (
+          <div style={{ fontSize: 13.5 }}>
+            <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>{r.subject}</div>
+            <div style={{ whiteSpace: 'pre-wrap' }}>{r.purpose}</div>
+            {r.assignee && <div style={{ marginTop: 10 }}><span className="sub">Handled by </span>{r.assignee.name}</div>}
+            {r.resolution && <div className="card" style={{ marginTop: 10, background: 'var(--ok-bg)', borderColor: 'transparent' }}><div className="sub">Outcome</div><div style={{ whiteSpace: 'pre-wrap' }}>{r.resolution}</div></div>}
+          </div>
+        ) : r.kind === 'purchase' ? (
           <div className="table-wrap">
             <table className="report">
               <thead><tr><th>#</th><th>Item</th><th className="r">Qty</th>{r.estimatedTotal != null && <th className="r">Est. price</th>}<th>Status</th><th className="no-print">Sourcing</th></tr></thead>
@@ -126,7 +144,7 @@ export function RequestDetailPage() {
           </div>
         )}
         <div style={{ marginTop: 12, fontSize: 13.5 }}>
-          {r.purpose && <div><span className="sub">Purpose: </span>{r.purpose}</div>}
+          {r.purpose && r.kind !== 'service' && <div><span className="sub">Purpose: </span>{r.purpose}</div>}
           {r.requiredDate && <div><span className="sub">Needed by: </span>{date(r.requiredDate)}</div>}
           {r.referenceUrl && <div><span className="sub">Reference: </span><a href={r.referenceUrl} target="_blank" rel="noreferrer noopener">{r.referenceUrl}</a></div>}
           {r.cancelReason && <div><span className="sub">Cancelled: </span>{r.cancelReason}</div>}
@@ -140,6 +158,8 @@ export function RequestDetailPage() {
           {p.canResubmit && <Link to={`/requests/${r.id}/edit`} className="btn-primary" style={{ textDecoration: 'none' }}>Edit &amp; resubmit</Link>}
           {p.canEvaluate && <button className="btn-primary" onClick={() => setModal('evaluate')}>Update evaluation</button>}
           {p.canReconcile && <button className="btn-primary" onClick={() => setModal('reconcile')}>Mark reconciled</button>}
+          {p.canTake && <button className="btn-primary" disabled={busy} onClick={() => run(() => api.post(`/api/requests/${r.id}/assign`, {})).catch(() => {})}>{r.assignee ? 'Take over' : 'Take this request'}</button>}
+          {p.canResolve && <button className="btn-ok" onClick={() => setModal('resolve')}>Resolve</button>}
           {p.canCancel && <button className="btn-danger" onClick={() => setModal('cancel')}>Cancel request</button>}
         </div>
       </Card>
@@ -177,6 +197,8 @@ export function RequestDetailPage() {
 
       {modal === 'cancel' && <ReasonModal title={`Cancel ${r.number}`} label="Reason" button="Cancel request" danger busy={busy} error={actionError}
         onClose={() => setModal(null)} onSubmit={(reason) => run(() => api.post(`/api/requests/${r.id}/cancel`, { reason }))} />}
+      {modal === 'resolve' && <ReasonModal title={`Resolve ${r.number}`} label="Outcome — the requester sees this" button="Mark completed" busy={busy} error={actionError}
+        onClose={() => setModal(null)} onSubmit={(resolution) => run(() => api.post(`/api/requests/${r.id}/resolve`, { resolution }))} />}
       {modal === 'evaluate' && <EvaluateModal busy={busy} error={actionError} onClose={() => setModal(null)}
         onSubmit={(status, c) => run(() => api.post(`/api/requests/${r.id}/evaluation`, { status, comment: c }))} />}
       {modal === 'reconcile' && <ReconcileModal busy={busy} error={actionError} onClose={() => setModal(null)}

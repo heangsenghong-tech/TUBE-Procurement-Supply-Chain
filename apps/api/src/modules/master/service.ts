@@ -1,10 +1,11 @@
 // Item & Supplier Master, stores/departments, users & roles, contracts and approval rules.
 import { and, asc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
-import { ALL_PERMISSIONS, type ItemInput, type SupplierInput } from '@tube/shared';
+import { ALL_PERMISSIONS, type ApprovalConditions, type ItemInput, type RequestTypeInput, type SupplierInput } from '@tube/shared';
 import type { Db, DbOrTx } from '../../db/client';
 import * as t from '../../db/schema';
 import { type Actor, can, requirePermission } from '../../core/actor';
 import { audit } from '../../core/audit';
+import { pickRule } from '../../core/approvals';
 import { badRequest, conflict, notFound } from '../../core/errors';
 import { nextNumber } from '../../core/numbering';
 import { deleteUserSessions } from '../../core/sessions';
@@ -251,48 +252,171 @@ export async function upsertContract(db: Db, actor: Actor, id: string | null, in
 
 // ---------------- approval rules ----------------
 export async function listApprovalRules(db: DbOrTx) {
-  const rules = await db.select().from(t.approvalRules).orderBy(asc(t.approvalRules.documentKind), asc(t.approvalRules.minAmount));
+  const rules = await db.select().from(t.approvalRules).orderBy(asc(t.approvalRules.documentKind), asc(t.approvalRules.minAmount), asc(t.approvalRules.priority));
   const steps = await db.select().from(t.approvalRuleSteps).orderBy(asc(t.approvalRuleSteps.seq));
   return rules.map((r) => ({ ...r, steps: steps.filter((s) => s.ruleId === r.id) }));
 }
 
-export async function updateApprovalRule(db: Db, actor: Actor, ruleId: string, input: {
+type RuleInput = {
+  documentKind?: 'request' | 'po'; conditions: ApprovalConditions; priority?: number;
   name: string; minAmount: number; maxAmount: number | null; isPettyCash: boolean; active: boolean;
   steps: { approverType: 'hod' | 'role'; roleKey?: string; actionLabel: string }[];
-}) {
+};
+
+// Same keys and values, regardless of order — used to spot rules that would compete.
+function canonical(c: ApprovalConditions) {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(c).sort()) {
+    const v = (c as Record<string, unknown>)[k];
+    out[k] = Array.isArray(v) ? [...v].sort() : v;
+  }
+  return JSON.stringify(out);
+}
+
+async function validateRule(tx: DbOrTx, kind: 'request' | 'po', input: RuleInput) {
+  const c = input.conditions;
+  if (kind === 'po' && (c.handling || c.requestTypeKeys || c.track || c.orgUnitIds)) {
+    throw badRequest('PO rules can only depend on item category, Direct/Indirect and urgency.');
+  }
+  if (input.isPettyCash) {
+    if (kind !== 'request') throw badRequest('Only request rules can be petty cash.');
+    if (c.handling === 'service') throw badRequest('Petty cash applies to purchases only.');
+    if (input.steps.length !== 1 || input.steps[0]!.approverType !== 'hod') throw badRequest('Petty cash needs exactly one step: the requester\'s HOD.');
+  }
+  for (const s of input.steps) {
+    if (s.approverType === 'hod' && kind === 'po') throw badRequest('POs have no HOD — pick a role.');
+    if (s.approverType === 'role') {
+      const role = await tx.query.roles.findFirst({ where: eq(t.roles.key, s.roleKey!) });
+      if (!role) throw badRequest(`Unknown role ${s.roleKey}.`);
+    }
+  }
+  if (c.requestTypeKeys) {
+    const types = await tx.select({ key: t.requestTypes.key }).from(t.requestTypes).where(inArray(t.requestTypes.key, c.requestTypeKeys));
+    const missing = c.requestTypeKeys.filter((k) => !types.some((x) => x.key === k));
+    if (missing.length) throw badRequest(`Unknown request type: ${missing.join(', ')}`);
+  }
+  if (c.orgUnitIds) {
+    const units = await tx.select({ id: t.orgUnits.id }).from(t.orgUnits).where(inArray(t.orgUnits.id, c.orgUnitIds));
+    if (units.length !== new Set(c.orgUnitIds).size) throw badRequest('Unknown store or department in the conditions.');
+  }
+}
+
+// Two active rules with identical conditions and overlapping amounts would make routing
+// ambiguous. Different conditions are fine: the more specific rule wins.
+async function checkOverlap(tx: DbOrTx, ruleId: string) {
+  const rule = (await tx.query.approvalRules.findFirst({ where: eq(t.approvalRules.id, ruleId) }))!;
+  if (!rule.active) return;
+  const others = await tx.select().from(t.approvalRules)
+    .where(and(eq(t.approvalRules.documentKind, rule.documentKind), eq(t.approvalRules.active, true)));
+  const mine = canonical(rule.conditions as ApprovalConditions);
+  const clash = others.find((o) => o.id !== rule.id && canonical(o.conditions as ApprovalConditions) === mine &&
+    rule.minAmount < (o.maxAmount ?? Infinity) && o.minAmount < (rule.maxAmount ?? Infinity));
+  if (clash) throw badRequest(`This overlaps "${clash.name}" (same conditions, overlapping amounts). Adjust one of them.`);
+}
+
+async function writeSteps(tx: DbOrTx, ruleId: string, steps: RuleInput['steps']) {
+  await tx.delete(t.approvalRuleSteps).where(eq(t.approvalRuleSteps.ruleId, ruleId));
+  if (steps.length) {
+    await tx.insert(t.approvalRuleSteps).values(steps.map((s, i) => ({
+      ruleId, seq: i + 1, approverType: s.approverType, roleKey: s.approverType === 'role' ? s.roleKey! : null, actionLabel: s.actionLabel
+    })));
+  }
+}
+
+export async function createApprovalRule(db: Db, actor: Actor, input: RuleInput) {
+  requirePermission(actor, 'settings.manage');
+  const kind = input.documentKind;
+  if (!kind) throw badRequest('Choose whether the rule is for requests or POs.');
+  return db.transaction(async (tx) => {
+    await validateRule(tx, kind, input);
+    const [rule] = await tx.insert(t.approvalRules).values({
+      documentKind: kind, name: input.name, minAmount: input.minAmount, maxAmount: input.maxAmount,
+      isPettyCash: input.isPettyCash, active: input.active, conditions: input.conditions, priority: input.priority ?? 50
+    }).returning();
+    await writeSteps(tx, rule!.id, input.steps);
+    await checkOverlap(tx, rule!.id);
+    await audit(tx, { userId: actor.id, action: 'approval_rule.create', entityType: 'approval_rule', entityId: rule!.id, after: input });
+    return { id: rule!.id };
+  });
+}
+
+// Rules are never deleted (approvals already under way point at them); switch them off instead.
+export async function updateApprovalRule(db: Db, actor: Actor, ruleId: string, input: RuleInput) {
   requirePermission(actor, 'settings.manage');
   return db.transaction(async (tx) => {
     const before = await tx.query.approvalRules.findFirst({ where: eq(t.approvalRules.id, ruleId) });
     if (!before) throw notFound('Approval rule');
-    if (input.isPettyCash && before.documentKind !== 'request') throw badRequest('Only request rules can be petty cash.');
-    if (input.isPettyCash && (input.steps.length !== 1 || input.steps[0]!.approverType !== 'hod')) {
-      throw badRequest('Petty cash needs exactly one step: the requester\'s HOD.');
-    }
-    for (const s of input.steps) {
-      if (s.approverType === 'role') {
-        const role = await tx.query.roles.findFirst({ where: eq(t.roles.key, s.roleKey!) });
-        if (!role) throw badRequest(`Unknown role ${s.roleKey}.`);
-      }
-      if (s.approverType === 'hod' && before.documentKind === 'po') throw badRequest('POs have no HOD — pick a role.');
-    }
+    if (input.documentKind && input.documentKind !== before.documentKind) throw badRequest('A rule can\'t switch between requests and POs.');
+    await validateRule(tx, before.documentKind, input);
     const beforeSteps = await tx.select().from(t.approvalRuleSteps).where(eq(t.approvalRuleSteps.ruleId, ruleId));
     await tx.update(t.approvalRules).set({
-      name: input.name, minAmount: input.minAmount, maxAmount: input.maxAmount, isPettyCash: input.isPettyCash, active: input.active, updatedAt: new Date()
+      name: input.name, minAmount: input.minAmount, maxAmount: input.maxAmount, isPettyCash: input.isPettyCash, active: input.active,
+      conditions: input.conditions, priority: input.priority ?? before.priority, updatedAt: new Date()
     }).where(eq(t.approvalRules.id, ruleId));
-    await tx.delete(t.approvalRuleSteps).where(eq(t.approvalRuleSteps.ruleId, ruleId));
-    if (input.steps.length) {
-      await tx.insert(t.approvalRuleSteps).values(input.steps.map((s, i) => ({
-        ruleId, seq: i + 1, approverType: s.approverType, roleKey: s.approverType === 'role' ? s.roleKey! : null, actionLabel: s.actionLabel
-      })));
-    }
-    // Overlapping active ranges would make routing ambiguous.
-    const overlaps = await tx.execute<{ name: string }>(sql`
-      select b.name from approval_rules a join approval_rules b
-        on a.id <> b.id and a.document_kind = b.document_kind and a.active and b.active and a.conditions = b.conditions
-        and a.min_amount < coalesce(b.max_amount, 'Infinity'::numeric) and b.min_amount < coalesce(a.max_amount, 'Infinity'::numeric)
-      where a.id = ${ruleId}`);
-    if (overlaps[0]) throw badRequest(`This range overlaps "${overlaps[0].name}". Adjust one of them.`);
+    await writeSteps(tx, ruleId, input.steps);
+    await checkOverlap(tx, ruleId);
     await audit(tx, { userId: actor.id, action: 'approval_rule.update', entityType: 'approval_rule', entityId: ruleId,
       before: { ...before, steps: beforeSteps }, after: input });
+  });
+}
+
+// "Who would approve this?" — lets an administrator check the rules before anyone submits.
+export async function previewRouting(db: DbOrTx, actor: Actor, q: {
+  documentKind: 'request' | 'po'; amount: number; handling?: 'purchase' | 'service'; requestTypeKey?: string;
+  orgUnitId?: string; categories?: string[]; procurementTypes?: string[]; urgent?: boolean;
+}) {
+  requirePermission(actor, 'settings.manage');
+  let track: 'store' | 'hq' | undefined;
+  let hodLabel = 'the requester\'s HOD';
+  if (q.orgUnitId) {
+    const unit = await db.query.orgUnits.findFirst({ where: eq(t.orgUnits.id, q.orgUnitId) });
+    if (!unit) throw badRequest('Unknown store or department.');
+    track = unit.type === 'store' ? 'store' : 'hq';
+    const hod = unit.hodUserId ? await db.query.users.findFirst({ where: eq(t.users.id, unit.hodUserId) }) : null;
+    hodLabel = hod ? `${hod.name} (HOD, ${unit.name})` : `HOD of ${unit.name} — none assigned, Supply Chain Manager override`;
+  }
+  const handling = q.documentKind === 'request' ? (q.handling ?? 'purchase') : undefined;
+  const { rule, steps } = await pickRule(db, q.documentKind, handling === 'service' ? 0 : q.amount, {
+    handling, requestTypeKey: q.requestTypeKey, track, orgUnitId: q.orgUnitId, categories: q.categories, procurementTypes: q.procurementTypes, urgent: q.urgent
+  });
+  const roleNames = await db.select({ key: t.roles.key, name: t.roles.name }).from(t.roles);
+  return {
+    rule: { id: rule.id, name: rule.name, isPettyCash: rule.isPettyCash },
+    steps: steps.map((s) => ({
+      seq: s.seq, actionLabel: s.actionLabel,
+      approver: s.approverType === 'hod' ? hodLabel : roleNames.find((r) => r.key === s.roleKey)?.name ?? s.roleKey
+    }))
+  };
+}
+
+// ---------------- request types ----------------
+export async function listRequestTypes(db: DbOrTx, actor: Actor, includeInactive = false) {
+  const rows = await db.select().from(t.requestTypes)
+    .where(includeInactive && can(actor, 'settings.manage') ? undefined : eq(t.requestTypes.active, true))
+    .orderBy(asc(t.requestTypes.sortOrder), asc(t.requestTypes.name));
+  return rows;
+}
+
+export async function upsertRequestType(db: Db, actor: Actor, id: string | null, input: RequestTypeInput) {
+  requirePermission(actor, 'settings.manage');
+  return db.transaction(async (tx) => {
+    const dup = await tx.query.requestTypes.findFirst({ where: eq(t.requestTypes.key, input.key) });
+    if (dup && dup.id !== id) throw conflict(`The key "${input.key}" is already used by ${dup.name}.`);
+    const values = { ...input, updatedAt: new Date() };
+    if (id) {
+      const before = await tx.query.requestTypes.findFirst({ where: eq(t.requestTypes.id, id) });
+      if (!before) throw notFound('Request type');
+      // Changing the workflow or key under existing requests would break their history and rules.
+      if (before.handling !== input.handling || before.key !== input.key) {
+        const used = await tx.select({ id: t.requests.id }).from(t.requests).where(eq(t.requests.requestTypeId, id)).limit(1);
+        if (used[0]) throw badRequest('This type already has requests, so its key and workflow can\'t change. Add a new type and retire this one instead.');
+      }
+      await tx.update(t.requestTypes).set(values).where(eq(t.requestTypes.id, id));
+      await audit(tx, { userId: actor.id, action: 'request_type.update', entityType: 'request_type', entityId: id, before, after: values });
+      return { id };
+    }
+    const [row] = await tx.insert(t.requestTypes).values(values).returning();
+    await audit(tx, { userId: actor.id, action: 'request_type.create', entityType: 'request_type', entityId: row!.id, after: values });
+    return { id: row!.id };
   });
 }

@@ -8,6 +8,9 @@ import { LoginPage } from './pages/Login';
 import { HomePage } from './pages/Home';
 import { NewPurchaseRequestPage } from './pages/NewPurchaseRequest';
 import { NewSampleRequestPage } from './pages/NewSampleRequest';
+import { NewRequestPage } from './pages/NewRequest';
+import { NewServiceRequestPage } from './pages/NewServiceRequest';
+import { EditRequestPage } from './pages/EditRequest';
 import { RequestDetailPage } from './pages/RequestDetail';
 import { ApprovalsPage } from './pages/Approvals';
 import { WorkspacePage } from './workspace/Workspace';
@@ -26,10 +29,12 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<LoginPage />} />
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
+            <Route path="requests/new" element={<NewRequestPage />} />
             <Route path="requests/new/purchase" element={<NewPurchaseRequestPage />} />
+            <Route path="requests/new/service" element={<NewServiceRequestPage />} />
             <Route path="requests/new/sample" element={<NewSampleRequestPage />} />
             <Route path="requests/:id" element={<RequestDetailPage />} />
-            <Route path="requests/:id/edit" element={<NewPurchaseRequestPage />} />
+            <Route path="requests/:id/edit" element={<EditRequestPage />} />
             <Route path="approvals" element={<ApprovalsPage />} />
             <Route path="workspace" element={<WorkspacePage />} />
             <Route path="workspace/:panel" element={<WorkspacePage />} />

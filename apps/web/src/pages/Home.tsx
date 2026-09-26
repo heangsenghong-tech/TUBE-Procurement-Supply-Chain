@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { api, download, money, timeAgo } from '../lib/api';
-import { Card, Empty, ErrorText, Loading, StatusTag, useCan, useMe } from '../lib/ui';
+import { Card, Empty, ErrorText, Loading, StatusTag, UrgentTag, useCan, useMe } from '../lib/ui';
 import type { InboxEntry, RequestSummary, Spend } from '../lib/types';
 
 type Stats = Record<string, number>;
@@ -23,6 +23,7 @@ function Dashboard() {
         <Stat label="WAITING FOR MY APPROVAL" value={d.awaitingMyApproval} tone="c-yellow" to="/approvals" />
         {can('procurement.operate') && <>
           <Stat label="WITH PROCUREMENT" value={d.prWithProcurement} tone="c-yellow" to="/workspace/review" />
+          <Stat label="SERVICE REQUESTS OPEN" value={d.serviceQueue} tone="c-green" to="/workspace/service" />
           <Stat label="OPEN COMPARISONS" value={d.openComparisons} tone="c-blue" to="/workspace/qcs" />
         </>}
         {can('po.view') && <>
@@ -34,6 +35,7 @@ function Dashboard() {
           <Stat label="ACTIVE SKUs" value={d.activeSkus} tone="c-yellow" to={can('pricing.view') ? '/workspace/price-list' : undefined} />
           <Stat label="ACTIVE SUPPLIERS" value={d.activeSuppliers} tone="c-blue" />
           <Stat label="STORES/DEPTS ACTIVE (30 DAYS)" value={d.activeUnits30d} tone="c-green" />
+          <Stat label="URGENT PURCHASES (30 DAYS)" value={d.urgentPct30d == null ? undefined : `${d.urgentPct30d}%`} tone="c-rose" />
         </>}
         {can('pettycash.view') && <Stat label="PETTY CASH TO RECONCILE" value={d.pettyCashToReconcile} tone="c-rose" to="/workspace/petty-cash" />}
         {can('contract.view') && <Stat label="CONTRACTS EXPIRING ≤ 60 DAYS" value={d.contractsExpiringSoon} tone="c-rose" to="/workspace/contracts" />}
@@ -84,8 +86,8 @@ function WaitingForMe() {
     <Card title={`Waiting for your approval (${data.length})`} actions={<Link to="/approvals" className="btn-ghost">Open Approvals</Link>}>
       {data.slice(0, 4).map((e) => (
         <Link key={e.documentId} to={e.kind === 'po' ? `/pos/${e.documentId}` : `/requests/${e.documentId}`} className="list-row">
-          <span><strong>{e.number}</strong> · {e.title}<br /><span className="sub">{e.stepLabel} · from {e.by} · {timeAgo(e.submittedAt)}</span></span>
-          <span className="num" style={{ fontSize: 15 }}>{money(e.amount)}</span>
+          <span><strong>{e.number}</strong> · {e.title}{e.urgent && <UrgentTag />}<br /><span className="sub">{e.typeName} · {e.stepLabel} · from {e.by} · {timeAgo(e.submittedAt)}</span></span>
+          {e.amount != null && <span className="num" style={{ fontSize: 15 }}>{money(e.amount)}</span>}
         </Link>
       ))}
     </Card>
@@ -118,8 +120,9 @@ function RequestList() {
       {isLoading ? <Loading /> : !data?.length ? <Empty>No requests yet.</Empty> : data.map((r) => (
         <Link key={r.id} to={`/requests/${r.id}`} className="list-row">
           <span>
-            <strong>{r.number}</strong> · {r.kind === 'sample' ? `Sample: ${r.itemName}` : `${r.lineCount} item${r.lineCount === 1 ? '' : 's'}`}
+            <strong>{r.number}</strong> · {r.kind === 'sample' ? `Sample: ${r.itemName}` : r.kind === 'service' ? r.subject : `${r.typeName} · ${r.lineCount} item${r.lineCount === 1 ? '' : 's'}`}
             {r.isPettyCash && <span className="tag tag-petty" style={{ marginLeft: 6 }}>Petty cash</span>}
+            {r.isUrgent && <UrgentTag />}
             <br /><span className="sub">{r.orgUnitName} · {r.requesterName} · {timeAgo(r.submittedAt)}</span>
           </span>
           <span className="flex items-center gap-2">
@@ -137,10 +140,10 @@ export function HomePage() {
   return (
     <>
       <Dashboard />
-      <Card title="New request" note="Buying something: Purchase Request (under $100 becomes a petty cash record your HOD acknowledges). Not sure yet: Sample Request, to get a sample sourced and tried first.">
+      <Card title="Request Center" note="Anything you need from Procurement — items, a sample, a new supplier, a price, a contract or maintenance. Pick the type and the system routes it.">
         <div className="flex gap-2 flex-wrap">
-          <Link to="/requests/new/purchase" className="btn-primary" style={{ textDecoration: 'none', padding: '12px 22px' }}>+ Purchase Request</Link>
-          <Link to="/requests/new/sample" className="btn-ghost" style={{ padding: '11px 18px', fontSize: 14 }}>+ Sample Request</Link>
+          <Link to="/requests/new" className="btn-primary" style={{ textDecoration: 'none', padding: '12px 22px' }}>+ New Request</Link>
+          <Link to="/requests/new/purchase" className="btn-ghost" style={{ padding: '11px 18px', fontSize: 14 }}>Quick purchase request</Link>
         </div>
       </Card>
       <WaitingForMe />

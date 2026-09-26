@@ -12,14 +12,25 @@ const httpUrl = z.string().trim().max(500).url().refine((u) => /^https?:\/\//i.t
 
 export const trackSchema = z.enum(['store', 'hq']);
 
+// Urgent requests carry a reason; approvers and Procurement see them first.
+const urgency = {
+  requestTypeId: id.optional(),
+  isUrgent: z.boolean().optional(),
+  urgentReason: optionalText(300)
+};
+const urgentNeedsReason = <T extends { isUrgent?: boolean; urgentReason?: string }>(v: T) => !v.isUrgent || !!v.urgentReason;
+const urgentReasonIssue = { message: 'Say why it\'s urgent', path: ['urgentReason'] };
+
 export const purchaseRequestInput = z.object({
   track: trackSchema,
   orgUnitId: id,
   requiredDate: isoDate.optional(),
   purpose: optionalText(500),
   referenceUrl: httpUrl,
-  lines: z.array(z.object({ itemId: id, qty: quantity })).min(1, 'Add at least one item').max(60)
-}).refine((v) => new Set(v.lines.map((l) => l.itemId)).size === v.lines.length, { message: 'Each item may appear only once — combine the quantities', path: ['lines'] });
+  lines: z.array(z.object({ itemId: id, qty: quantity })).min(1, 'Add at least one item').max(60),
+  ...urgency
+}).refine((v) => new Set(v.lines.map((l) => l.itemId)).size === v.lines.length, { message: 'Each item may appear only once — combine the quantities', path: ['lines'] })
+  .refine(urgentNeedsReason, urgentReasonIssue);
 export type PurchaseRequestInput = z.infer<typeof purchaseRequestInput>;
 
 export const sampleRequestInput = z.object({
@@ -33,9 +44,46 @@ export const sampleRequestInput = z.object({
   size: optionalText(100),
   material: optionalText(100),
   colorCode: optionalText(100),
-  referenceUrl: httpUrl
+  referenceUrl: httpUrl,
+  requestTypeId: id.optional()
 });
 export type SampleRequestInput = z.infer<typeof sampleRequestInput>;
+
+// A request for Procurement to do something that isn't buying catalog items:
+// find a new supplier, get a price, draft a contract, arrange maintenance…
+export const serviceRequestInput = z.object({
+  track: trackSchema,
+  orgUnitId: id,
+  requestTypeId: id,
+  subject: z.string().trim().min(1, 'Add a short subject').max(200),
+  description: z.string().trim().min(1, 'Describe what you need').max(3000),
+  requiredDate: isoDate.optional(),
+  referenceUrl: httpUrl,
+  isUrgent: z.boolean().optional(),
+  urgentReason: optionalText(300)
+}).refine(urgentNeedsReason, urgentReasonIssue);
+export type ServiceRequestInput = z.infer<typeof serviceRequestInput>;
+
+export const assignServiceInput = z.object({ assigneeId: id.optional() });
+export const resolveServiceInput = z.object({ resolution: z.string().trim().min(1, 'Describe the outcome').max(3000) });
+
+export const REQUEST_GROUPS = { procurement: 'Procurement', supply_chain: 'Supply Chain', projects: 'Projects', other: 'Other' } as const;
+export const REQUEST_HANDLING = {
+  purchase: 'Purchase — catalog items, approval by value, then sourcing',
+  sample: 'Sample — source and evaluate before buying',
+  service: 'Service — a task for Procurement (HOD acknowledges first)'
+} as const;
+
+export const requestTypeInput = z.object({
+  key: z.string().trim().min(2).max(40).regex(/^[a-z0-9_]+$/, 'Lowercase letters, digits and _ only'),
+  name: z.string().trim().min(1).max(80),
+  group: z.enum(['procurement', 'supply_chain', 'projects', 'other']),
+  handling: z.enum(['purchase', 'sample', 'service']),
+  description: z.string().trim().max(300).default(''),
+  sortOrder: z.number().int().min(0).max(999).default(100),
+  active: z.boolean().default(true)
+});
+export type RequestTypeInput = z.infer<typeof requestTypeInput>;
 
 export const sampleEvaluationInput = z.object({
   status: z.enum(SAMPLE_EVALUATION_STATUSES),
@@ -157,7 +205,23 @@ export const contractInput = z.object({
   documentPointer: optionalText(500)
 });
 
+// When an approval rule applies, beyond its amount range. Every condition given must match;
+// the most specific matching rule wins. Categories match when every line is in the list.
+export const approvalConditions = z.object({
+  handling: z.enum(['purchase', 'service']).optional(),
+  requestTypeKeys: z.array(z.string().min(1)).min(1).max(50).optional(),
+  track: trackSchema.optional(),
+  orgUnitIds: z.array(id).min(1).max(200).optional(),
+  categories: z.array(z.enum(['Food', 'Non-food'])).min(1).optional(),
+  procurementTypes: z.array(z.enum(['Direct', 'Indirect'])).min(1).optional(),
+  urgent: z.boolean().optional()
+}).strict();
+export type ApprovalConditions = z.infer<typeof approvalConditions>;
+
 export const approvalRuleInput = z.object({
+  documentKind: z.enum(['request', 'po']).optional(),
+  conditions: approvalConditions.default({}),
+  priority: z.number().int().min(0).max(1000).optional(),
   name: z.string().trim().min(1).max(120),
   minAmount: money,
   maxAmount: money.nullable(),

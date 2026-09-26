@@ -27,6 +27,7 @@ export async function reviewQueue(db: DbOrTx, actor: Actor) {
   const rows = await db.select({
     lineId: t.requestLines.id, qty: t.requestLines.qty, itemId: t.requestLines.itemId,
     requestId: t.requests.id, requestNumber: t.requests.number, requiredDate: t.requests.requiredDate, submittedAt: t.requests.submittedAt,
+    isUrgent: t.requests.isUrgent, urgentReason: t.requests.urgentReason,
     unitName: t.orgUnits.name, track: t.requests.track, requesterName: t.users.name,
     itemCode: t.items.code, itemDescription: t.items.description, uom: t.items.uom, category: t.items.category
   }).from(t.requestLines)
@@ -41,24 +42,26 @@ export async function reviewQueue(db: DbOrTx, actor: Actor) {
   const prices = await currentSupplierPrices(db, itemIds);
   const estimates = await estimatedPrices(db, itemIds);
   const groups = new Map<string, {
-    itemId: string; itemCode: string; itemDescription: string; uom: string; category: string; totalQty: number; estimatedUnitPrice: number;
+    itemId: string; itemCode: string; itemDescription: string; uom: string; category: string; totalQty: number; estimatedUnitPrice: number; urgent: boolean;
     supplierPrices: { supplierId: string; supplierName: string; unitPrice: number; rank: number }[];
-    contributors: { lineId: string; requestId: string; requestNumber: string; unitName: string; track: string; requesterName: string; qty: number; requiredDate: string | null; submittedAt: Date }[];
+    contributors: { lineId: string; requestId: string; requestNumber: string; unitName: string; track: string; requesterName: string; qty: number; requiredDate: string | null; submittedAt: Date; isUrgent: boolean; urgentReason: string | null }[];
   }>();
   for (const r of rows) {
     let g = groups.get(r.itemId);
     if (!g) {
-      g = { itemId: r.itemId, itemCode: r.itemCode, itemDescription: r.itemDescription, uom: r.uom, category: r.category, totalQty: 0,
+      g = { itemId: r.itemId, itemCode: r.itemCode, itemDescription: r.itemDescription, uom: r.uom, category: r.category, totalQty: 0, urgent: false,
         estimatedUnitPrice: estimates.get(r.itemId) ?? 0,
         supplierPrices: prices.filter((p) => p.itemId === r.itemId).map((p) => ({ supplierId: p.supplierId, supplierName: p.supplierName, unitPrice: p.unitPrice, rank: p.rank })),
         contributors: [] };
       groups.set(r.itemId, g);
     }
     g.totalQty = Math.round((g.totalQty + r.qty) * 1000) / 1000;
+    g.urgent ||= r.isUrgent;
     g.contributors.push({ lineId: r.lineId, requestId: r.requestId, requestNumber: r.requestNumber, unitName: r.unitName, track: r.track,
-      requesterName: r.requesterName, qty: r.qty, requiredDate: r.requiredDate, submittedAt: r.submittedAt });
+      requesterName: r.requesterName, qty: r.qty, requiredDate: r.requiredDate, submittedAt: r.submittedAt, isUrgent: r.isUrgent, urgentReason: r.urgentReason });
   }
-  return [...groups.values()];
+  // Items needed urgently by any store come first.
+  return [...groups.values()].sort((a, b) => Number(b.urgent) - Number(a.urgent));
 }
 
 // Locks the given PR lines and checks they're all in the expected state and match their items.
@@ -255,7 +258,17 @@ async function insertPo(tx: Tx, actor: Actor, args: { supplierId: string; qcsId:
   const supplier = await tx.query.suppliers.findFirst({ where: and(eq(t.suppliers.id, args.supplierId), eq(t.suppliers.active, true)) });
   if (!supplier) throw badRequest('Choose an active supplier.');
   const total = sum(args.lines.map((l) => lineAmount(l.qty, l.unitPrice)));
-  const { rule, steps } = await pickRule(tx, 'po', total);
+  // PO rules can depend on what's being bought and whether any source request is urgent.
+  const lineItems = await tx.select({ category: t.items.category, procurementType: t.items.procurementType })
+    .from(t.items).where(inArray(t.items.id, args.lines.map((l) => l.itemId)));
+  const urgentSource = await tx.select({ id: t.requests.id }).from(t.requestLines)
+    .innerJoin(t.requests, eq(t.requests.id, t.requestLines.requestId))
+    .where(and(inArray(t.requestLines.id, args.lines.flatMap((l) => l.requestLineIds)), eq(t.requests.isUrgent, true))).limit(1);
+  const { rule, steps } = await pickRule(tx, 'po', total, {
+    categories: [...new Set(lineItems.map((i) => i.category))],
+    procurementTypes: [...new Set(lineItems.map((i) => i.procurementType))],
+    urgent: !!urgentSource[0]
+  });
   const number = await nextNumber(tx, 'PO');
   const [po] = await tx.insert(t.purchaseOrders).values({
     number, supplierId: supplier.id, qcsId: args.qcsId, status: 'pending_approval', total,
