@@ -14,7 +14,8 @@ with Docker, about 2 GB RAM and 20 GB disk, and a name people can reach it by.
 Only verified accounts from `GOOGLE_ALLOWED_DOMAINS` (default `tubecafecambodia.com`) are accepted,
 and only if an administrator has added that email in **Users & Stores**. Individual outside
 accounts can be allowed by exact address in `GOOGLE_ALLOWED_EMAILS` — `.env.example` lists
-TAING Pengpheng's Gmail, the authorised Finance proxy. What they can do still comes only from the
+the two intentional exceptions: TAING Pengpheng (Accounting Manager, authorised Finance proxy) and
+PICH Pidor (Supply Chain Manager). What they can do still comes only from the
 roles assigned to them in the app.
 
 ## 2. Configure and start
@@ -29,12 +30,13 @@ docker compose up -d --build
 - **Company-network server without a public domain:** set `TLS_MODE=tls internal`. Caddy issues its own certificate; install Caddy's root certificate on staff devices (or use your company's certificate). Google sign-in still works because the redirect happens in the browser.
 
 On first start the app creates the tables, loads roles, the approval matrix, the real item &
-supplier master, the company's 11 HQ departments and 79 stores (`data/seed/departments.csv`,
+supplier master, the company's 11 HQ departments and 80 stores (`data/seed/departments.csv`,
 `data/seed/stores.csv`; KDT company-owned, the rest franchisees), and the administrator from
 `BOOTSTRAP_ADMIN_EMAIL`. Sign in with that Google account, then in **Users & Stores**:
 
-1. **Users → Bulk add people:** import `data/org/approvers.csv` (Head of Operation, both Heads of
-   Finance, CEO), then everyone else with their store/department and role.
+1. **Users → Bulk add people:** import `data/org/hq-people.csv` (every HQ department head with an
+   email, plus the approver roles: CEO, Head of Operation, both Heads of Finance, Supply Chain
+   Manager), then everyone else with their store/department and role.
 2. **Stores & departments → Bulk add:** import `data/seed/departments.csv` again — this time its
    *HOD Email* column sets the department heads. Do the same with a stores file listing each
    store's manager in *HOD Email* (they acknowledge that store's petty cash). A blank HOD Email or

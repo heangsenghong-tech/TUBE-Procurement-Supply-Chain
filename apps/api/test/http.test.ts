@@ -95,6 +95,12 @@ describe('Google sign-in claims', () => {
     expect(() => checkClaims(withProxy, { ...proxy, email_verified: false }, 'n')).toThrow(/verified/);
     expect(() => checkClaims(cfg, proxy, 'n')).toThrow(/Workspace/);
   });
+  it('reads several listed outside accounts from the setting', () => {
+    const c = loadConfig({ DATABASE_URL: TEST_DB_URL, GOOGLE_ALLOWED_EMAILS: 'taingpengpheng@gmail.com, Pidor456@gmail.com' } as never);
+    expect(c.allowedEmails).toEqual(['taingpengpheng@gmail.com', 'pidor456@gmail.com']);
+    const pidor = { sub: '2', email: 'pidor456@gmail.com', email_verified: true, nonce: 'n', name: 'PICH Pidor' };
+    expect(checkClaims(c, pidor, 'n').email).toBe('pidor456@gmail.com');
+  });
 });
 
 describe('authorization over HTTP', () => {

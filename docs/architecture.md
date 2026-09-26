@@ -12,7 +12,7 @@ look, and moves it onto a real backend where **every rule is enforced by the ser
 | 3 | Spend **by supplier** is visible only to Procurement, Finance and leadership (`spend.supplier.view`). |
 | 4 | **Petty cash (< $100):** a PR is still raised; only the requester's HOD acknowledges it; it goes to Finance's Petty Cash register for reconciliation against the physical invoice and **never** enters Review, Quote Comparison or PO. |
 | 5 | **One PO per supplier**, with multiple item lines. |
-| 6 | **Sign in with Google** (Google Workspace), no passwords. Only people an administrator has added can sign in. Named outside accounts may be allowed individually (`GOOGLE_ALLOWED_EMAILS`) — e.g. the Finance proxy's Gmail. |
+| 6 | **Sign in with Google** (Google Workspace), no passwords. Only people an administrator has added can sign in. Named outside accounts may be allowed individually (`GOOGLE_ALLOWED_EMAILS`) — the Finance proxy's and the Supply Chain Manager's Gmail accounts. |
 | 7 | Supplier contact file to follow; the master was seeded from the live prototype (160 items, 26 suppliers). |
 | 8 | Hosting undecided — Docker Compose deploys identically to a company server or a VPS. |
 | 9 | "Urgent Purchase" is an **urgent flag with a reason** on any purchase or service request, rather than a separate type, so urgent IT, equipment or maintenance requests keep their own type and rules. |
@@ -114,7 +114,7 @@ the requesting unit:
 use the same tiers on their estimated cost, except that below $100 they go to Procurement rather than
 petty cash. Store ownership doesn't change routing:
 KDT follows the Track B process but is tagged **company-owned** (Tube Cafe Co., Ltd. pays), while
-other stores are franchisee-billed. The named approvers are in `data/org/approvers.csv`, ready for
+other stores are franchisee-billed. HQ department heads and approvers are in `data/org/hq-people.csv`, ready for
 **Users & Stores → Bulk add people**.
 
 ### Roles (configurable)
