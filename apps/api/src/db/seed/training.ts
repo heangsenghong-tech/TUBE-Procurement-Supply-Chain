@@ -1,5 +1,5 @@
-// Demo data for the Training environment only (APP_ENV=training): stores, one person per role,
-// and transactions in every state. Created through the real services, so it follows the same
+// Demo data for the Training environment only (APP_ENV=training): one person per role, on the
+// company's real stores and departments, and transactions in every state. Created through the real services, so it follows the same
 // rules as real data. Production never runs this.
 import { eq, inArray } from 'drizzle-orm';
 import type { Db } from '../client';
@@ -10,11 +10,6 @@ import * as proc from '../../modules/procurement/service';
 import * as master from '../../modules/master/service';
 
 const DOMAIN = 'training.tubecafe.demo';
-
-const STORES = [
-  ['TK', 'Toul Kork'], ['BKK', 'BKK1'], ['CDP', 'CDP'], ['AEON1', 'AEON Mall 1'], ['AEON2', 'AEON Mall 2'],
-  ['RSY', 'Russey Keo'], ['SEN', 'Sen Sok'], ['CHM', 'Chamkar Mon'], ['DK', 'Daun Penh']
-] as const;
 
 const PEOPLE = [
   { key: 'admin', name: 'Demo Admin', unit: 'SCP', roles: ['super_admin', 'export_authorized'] },
@@ -27,8 +22,8 @@ const PEOPLE = [
   { key: 'warehouse', name: 'Demo Warehouse Officer', unit: 'SCP', roles: ['warehouse'] },
   { key: 'kdt.manager', name: 'Demo KDT Store Manager (HOD)', unit: 'KDT', roles: ['requester'], hodOf: 'KDT' },
   { key: 'kdt.staff', name: 'Demo KDT Barista', unit: 'KDT', roles: ['requester'] },
-  { key: 'tk.manager', name: 'Demo Toul Kork Manager (HOD)', unit: 'TK', roles: ['requester'], hodOf: 'TK' },
-  { key: 'tk.staff', name: 'Demo Toul Kork Barista', unit: 'TK', roles: ['requester'] },
+  { key: 'tk.manager', name: 'Demo Toul Kork Samai Square Manager (HOD)', unit: 'TKS', roles: ['requester'], hodOf: 'TKS' },
+  { key: 'tk.staff', name: 'Demo Toul Kork Samai Square Barista', unit: 'TKS', roles: ['requester'] },
   { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester', 'head_of_operation'], hodOf: 'OPS' },
   { key: 'mkt.staff', name: 'Demo Marketing Executive', unit: 'MKT', roles: ['requester'] },
   { key: 'mkt.head', name: 'Demo Head of Marketing (HOD)', unit: 'MKT', roles: ['requester'], hodOf: 'MKT' }
@@ -44,7 +39,6 @@ export async function seedTraining(db: Db) {
   await db.insert(t.userRoles).values({ userId: system!.id, roleId: superRole!.id });
   const sys = (await loadActor(db, system!.id))!;
 
-  for (const [code, name] of STORES) await master.upsertOrgUnit(db, sys, null, { code, name, type: 'store', ownership: 'franchisee' });
   const units = await master.listOrgUnits(db);
   const unit = (code: string) => units.find((u) => u.code === code)!;
 
@@ -77,7 +71,7 @@ export async function seedTraining(db: Db) {
 
   // 2) Another store needs the same bean — shows consolidation across stores.
   const tkStaff = await as('tk.staff');
-  const pr2 = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Weekly top-up',
+  const pr2 = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TKS').id, purpose: 'Weekly top-up',
     lines: [{ itemId: await item('I00043'), qty: 15 }, { itemId: await item('NEW-022'), qty: 1000 }] });
   await approveFully(pr2.id, 'tk.manager');
 
@@ -86,7 +80,7 @@ export async function seedTraining(db: Db) {
     lines: [{ itemId: await item('O000011'), qty: 6 }] });
 
   // 4) Petty cash: HOD acknowledges, goes to Finance's register, never to Procurement.
-  const pc = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Limes for tonight',
+  const pc = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TKS').id, purpose: 'Limes for tonight',
     lines: [{ itemId: await item('I00017'), qty: 10 }] });
   await req.actOnRequest(db, await as('tk.manager'), pc.id, { action: 'approve' });
 
@@ -144,7 +138,7 @@ export async function seedTraining(db: Db) {
   await req.assignServiceRequest(db, buyer, sv2.id);
 
   // 10) An urgent purchase waiting for approval.
-  await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Grinder burrs worn out',
+  await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TKS').id, purpose: 'Grinder burrs worn out',
     requestTypeId: await typeOf('equipment'), isUrgent: true, urgentReason: 'Grinder failing — can\'t serve espresso',
     lines: [{ itemId: await item('GEN-001'), qty: 1 }] });
 
