@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import { DEFAULT_ROLES } from '@tube/shared';
 import type { Db } from '../client';
 import * as t from '../schema';
+import { parseCsv } from '../../modules/master/import';
 
 // Canonical units of measure. The prototype's data spells several of these differently
 // (BOX/Box, BTL/Btl, KG/Kg, PCS/Pcs …); they are normalised on import.
@@ -73,10 +74,24 @@ const REQUEST_TYPES = [
     description: 'Arrange a repair or service visit (air-con, machines, facilities).' }
 ] as const;
 
+// Used only when data/seed/departments.csv is missing.
 const DEPARTMENTS = [
-  ['SCP', 'Supply Chain & Procurement'], ['OPS', 'Operation'], ['MKT', 'Marketing'],
-  ['IT', 'IT'], ['HR', 'HR'], ['FIN', 'Finance'], ['MGT', 'Management']
+  ['SCP', 'Supply Chain'], ['OPS', 'Operation'], ['MKT', 'Marketing'],
+  ['IT', 'IT'], ['HR', 'Human Resource'], ['FIN', 'Finance'], ['MGT', 'CEO Office']
 ] as const;
+
+// Code, Name, Type, Ownership columns of a Users & Stores import file (other columns ignored).
+function readUnits(file: string) {
+  if (!fs.existsSync(file)) return null;
+  const [header, ...rows] = parseCsv(fs.readFileSync(file, 'utf8'));
+  const col = (name: string) => header!.findIndex((h) => h.trim().toLowerCase() === name.toLowerCase());
+  const [code, name, type, ownership] = ['Code', 'Name', 'Type', 'Ownership'].map(col) as [number, number, number, number];
+  return rows.map((r) => ({
+    code: r[code]!.trim(), name: r[name]!.trim(),
+    type: r[type]!.trim().toLowerCase() === 'store' ? 'store' as const : 'department' as const,
+    ownership: r[type]!.trim().toLowerCase() === 'store' ? (r[ownership]?.trim().toLowerCase() === 'franchiser' ? 'franchiser' as const : 'franchisee' as const) : null
+  }));
+}
 
 interface SeedOptions {
   seedDir: string;
@@ -134,12 +149,15 @@ export async function seedReference(db: Db, opts: SeedOptions) {
 
   const [{ n: unitCount }] = await db.select({ n: sql<number>`count(*)::int` }).from(t.orgUnits) as [{ n: number }];
   if (unitCount === 0) {
-    await db.insert(t.orgUnits).values([
-      ...DEPARTMENTS.map(([code, name]) => ({ code, name, type: 'department' as const })),
-      // KDT runs the Track B store process but is company-owned: Tube Cafe Co., Ltd. pays directly.
-      { code: 'KDT', name: 'KDT', type: 'store' as const, ownership: 'franchiser' as const }
-    ]);
-    log.push('departments + KDT store');
+    // The company's HQ departments and stores. KDT runs the Track B store process but is
+    // company-owned (Tube Cafe Co., Ltd. pays directly); the other stores are franchisees.
+    // HODs are set afterwards by importing the same files once the people exist.
+    const departments = readUnits(path.join(opts.seedDir, 'departments.csv'))
+      ?? DEPARTMENTS.map(([code, name]) => ({ code, name, type: 'department' as const, ownership: null }));
+    const stores = readUnits(path.join(opts.seedDir, 'stores.csv'))
+      ?? [{ code: 'KDT', name: 'KDT', type: 'store' as const, ownership: 'franchiser' as const }];
+    await db.insert(t.orgUnits).values([...departments, ...stores]);
+    log.push(`${departments.length} departments, ${stores.length} stores`);
   }
 
   // Real Item & Supplier Master, exported from the live prototype.

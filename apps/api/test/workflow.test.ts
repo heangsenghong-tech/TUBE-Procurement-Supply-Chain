@@ -6,6 +6,7 @@ import * as proc from '../src/modules/procurement/service';
 import * as reports from '../src/modules/reports/service';
 import * as master from '../src/modules/master/service';
 import { loadActor } from '../src/core/actor';
+import { importOrgUnits } from '../src/modules/master/import';
 import { buildWorld, freshDatabase, type World } from './helpers';
 
 let w: World;
@@ -40,6 +41,25 @@ describe('master data', () => {
     expect(bean!.uom).toBe('Kg');
     const box = await w.db.query.items.findFirst({ where: eq(t.items.code, 'I00063') });
     expect(box!.uom).toBe('Box'); // was "BOX" in the prototype
+  });
+
+  it('loaded the real stores (Track B) and HQ departments (Track A); KDT is company-owned', async () => {
+    const units = await master.listOrgUnits(w.db);
+    const real = units.filter((u) => u.code !== 'TK'); // TK is added by the test world
+    expect(real.filter((u) => u.type === 'store')).toHaveLength(79);
+    expect(real.filter((u) => u.type === 'department').map((u) => u.code).sort())
+      .toEqual(['ADM', 'BD', 'CX', 'FIN', 'HR', 'IT', 'MGT', 'MKT', 'OPS', 'SCP', 'TA']);
+    expect(units.find((u) => u.code === 'KDT')!.ownership).toBe('franchiser');
+    expect(units.find((u) => u.code === 'TKS')!.ownership).toBe('franchisee');
+  });
+
+  it('re-importing stores with a blank HOD Email or Ownership keeps what is already set', async () => {
+    const csv = 'Code,Name,Type,Ownership,HOD Email\r\nKDT,KDT,store,,\r\n';
+    const res = await importOrgUnits(w.db, w.admin, csv, false);
+    expect(res).toMatchObject({ updated: 1, errors: [] });
+    const kdt = (await master.listOrgUnits(w.db)).find((u) => u.code === 'KDT')!;
+    expect(kdt.hodUserId).toBe(w.people['kdt.hod']!.id);
+    expect(kdt.ownership).toBe('franchiser');
   });
 
   it('numbers documents sequentially per year', async () => {
