@@ -4,3 +4,5 @@ data/runtime/
 *.sqlite-wal
 *.sqlite-shm
 .env
+dist/
+*.log
