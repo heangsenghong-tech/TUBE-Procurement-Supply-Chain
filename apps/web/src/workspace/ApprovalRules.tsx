@@ -20,7 +20,7 @@ export function ApprovalRulesPanel() {
     const parts: string[] = [];
     if (c.handling) parts.push(c.handling === 'service' ? 'service requests' : 'purchase requests');
     if (c.requestTypeKeys) parts.push(c.requestTypeKeys.map((k) => types.data?.find((t) => t.key === k)?.name ?? k).join(' / '));
-    if (c.track) parts.push(c.track === 'store' ? 'stores' : 'HQ departments');
+    if (c.track) parts.push(c.track === 'store' ? 'Track B — Stores' : 'Track A — HQ');
     if (c.orgUnitIds) parts.push(c.orgUnitIds.map((id) => units.data?.find((u) => u.id === id)?.name ?? '?').join(', '));
     if (c.categories) parts.push(`all ${c.categories.join(' / ')}`);
     if (c.procurementTypes) parts.push(`all ${c.procurementTypes.join(' / ')}`);
@@ -133,9 +133,9 @@ function RuleModal({ rule, kind, roles, types, units, onClose }: {
           <Field label="Request types">
             <Checks options={types.filter((t) => t.handling !== 'sample').map((t) => ({ value: t.key, label: t.name }))} value={c.requestTypeKeys} onChange={(v) => set({ requestTypeKeys: v })} />
           </Field>
-          <Field label="Store or HQ">
+          <Field label="Track">
             <select value={c.track ?? ''} onChange={(e) => set({ track: (e.target.value || undefined) as ApprovalConditions['track'] })}>
-              <option value="">Either</option><option value="store">Stores</option><option value="hq">HQ departments</option>
+              <option value="">Either</option><option value="hq">Track A — HQ</option><option value="store">Track B — Stores</option>
             </select>
           </Field>
           <Field label="Specific stores / departments">

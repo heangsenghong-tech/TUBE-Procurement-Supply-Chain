@@ -6,6 +6,7 @@ import * as proc from '../src/modules/procurement/service';
 import * as reports from '../src/modules/reports/service';
 import * as master from '../src/modules/master/service';
 import { loadActor } from '../src/core/actor';
+import { importOrgUnits } from '../src/modules/master/import';
 import { buildWorld, freshDatabase, type World } from './helpers';
 
 let w: World;
@@ -26,7 +27,7 @@ async function approvedStorePr(staff: string, hod: string, unit: string, lines: 
   });
   const detail = await req.getRequest(w.db, w.people.admin ?? w.admin, pr.id);
   for (const step of detail.approvals.at(-1)!.steps) {
-    const who = step.approver.includes('HOD') ? hod : step.approver.includes('Finance') ? 'finhead' : 'ceo';
+    const who = step.approver.includes('HOD') ? hod : step.approver.includes('Operation') ? 'ops.head' : step.approver.includes('Finance') ? 'finhead' : 'ceo';
     await req.actOnRequest(w.db, w.people[who]!, pr.id, approve);
   }
   return pr;
@@ -42,6 +43,25 @@ describe('master data', () => {
     expect(box!.uom).toBe('Box'); // was "BOX" in the prototype
   });
 
+  it('loaded the real stores (Track B) and HQ departments (Track A); KDT is company-owned', async () => {
+    const units = await master.listOrgUnits(w.db);
+    const real = units.filter((u) => u.code !== 'TK'); // TK is added by the test world
+    expect(real.filter((u) => u.type === 'store')).toHaveLength(79);
+    expect(real.filter((u) => u.type === 'department').map((u) => u.code).sort())
+      .toEqual(['ADM', 'BD', 'CX', 'FIN', 'HR', 'IT', 'MGT', 'MKT', 'OPS', 'SCP', 'TA']);
+    expect(units.find((u) => u.code === 'KDT')!.ownership).toBe('franchiser');
+    expect(units.find((u) => u.code === 'TKS')!.ownership).toBe('franchisee');
+  });
+
+  it('re-importing stores with a blank HOD Email or Ownership keeps what is already set', async () => {
+    const csv = 'Code,Name,Type,Ownership,HOD Email\r\nKDT,KDT,store,,\r\n';
+    const res = await importOrgUnits(w.db, w.admin, csv, false);
+    expect(res).toMatchObject({ updated: 1, errors: [] });
+    const kdt = (await master.listOrgUnits(w.db)).find((u) => u.code === 'KDT')!;
+    expect(kdt.hodUserId).toBe(w.people['kdt.hod']!.id);
+    expect(kdt.ownership).toBe('franchiser');
+  });
+
   it('numbers documents sequentially per year', async () => {
     const a = await req.createSampleRequest(w.db, w.people['mkt.staff']!, { track: 'hq', orgUnitId: w.units.MKT!, itemName: 'Cup', purpose: 'Test', quantity: 1 });
     const b = await req.createSampleRequest(w.db, w.people['mkt.staff']!, { track: 'hq', orgUnitId: w.units.MKT!, itemName: 'Lid', purpose: 'Test', quantity: 1 });
@@ -51,37 +71,56 @@ describe('master data', () => {
 });
 
 describe('approval matrix — enforced by the server', () => {
-  it('$300+: HOD → Head of Finance → CEO, and only the right person can act on each step', async () => {
+  it('Track B $300+: Head of Operation → Head of Finance → CEO, and only the right person can act on each step', async () => {
     const staff = w.people['kdt.staff']!;
     const pr = await req.createPurchaseRequest(w.db, staff, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 30 }] });
     const d = await req.getRequest(w.db, staff, pr.id);
-    expect(d.approvals[0]!.steps.map((s) => s.actionLabel)).toEqual(['Reviewed/Acknowledged', 'Reviewed', 'Approved']);
+    expect(d.approvals[0]!.steps.map((s) => s.actionLabel)).toEqual(['Reviewed', 'Reviewed', 'Approved']);
     expect(d.estimatedTotal).toBeNull(); // requesters never see prices…
     expect(JSON.stringify(d)).not.toMatch(/\$/); // …not even the value band in the rule name
 
     await expect(req.actOnRequest(w.db, staff, pr.id, approve)).rejects.toThrow(/own request|waiting for/);
     await expect(req.actOnRequest(w.db, w.people.ceo!, pr.id, approve)).rejects.toThrow(/waiting for/);
-    await expect(req.actOnRequest(w.db, w.people['tk.hod']!, pr.id, approve)).rejects.toThrow(/waiting for/); // another store's HOD
-    await req.actOnRequest(w.db, w.people['kdt.hod']!, pr.id, approve);
+    await expect(req.actOnRequest(w.db, w.people['kdt.hod']!, pr.id, approve)).rejects.toThrow(/waiting for/); // the store's own HOD only acknowledges petty cash
+    await req.actOnRequest(w.db, w.people['ops.head']!, pr.id, approve);
     await expect(req.actOnRequest(w.db, w.people.ceo!, pr.id, approve)).rejects.toThrow(/Head of Finance/);
     await req.actOnRequest(w.db, w.people.finhead!, pr.id, approve);
     await req.actOnRequest(w.db, w.people.ceo!, pr.id, approve);
     const after = await req.getRequest(w.db, staff, pr.id);
     expect(after.status).toBe('approved');
     expect(after.lines.every((l) => l.status === 'open')).toBe(true);
-    expect(after.approvals[0]!.steps.map((s) => s.actedBy)).toEqual(['kdt.hod', 'finhead', 'ceo']);
+    expect(after.approvals[0]!.steps.map((s) => s.actedBy)).toEqual(['ops.head', 'finhead', 'ceo']);
   });
 
-  it('$100–$299: HOD → Head of Finance only', async () => {
-    const pr = await req.createPurchaseRequest(w.db, w.people['kdt.staff']!, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 10 }] });
-    const d = await req.getRequest(w.db, w.admin, pr.id);
-    expect(d.estimatedTotal).toBe(113);
-    expect(d.approvals[0]!.steps).toHaveLength(2);
+  it('Track B $100–$299: Head of Operation → Head of Finance only, for every store', async () => {
+    for (const [unit, staff] of [['KDT', 'kdt.staff'], ['TK', 'tk.staff']] as const) {
+      const pr = await req.createPurchaseRequest(w.db, w.people[staff]!, { track: 'store', orgUnitId: w.units[unit]!, lines: [{ itemId: await w.item('I00043'), qty: 10 }] });
+      const d = await req.getRequest(w.db, w.admin, pr.id);
+      expect(d.estimatedTotal).toBe(113);
+      expect(d.approvals[0]!.ruleName).toBe('Track B — Stores: $100 – $299');
+      expect(d.approvals[0]!.steps.map((s) => s.actionLabel)).toEqual(['Reviewed', 'Approved']);
+    }
+  });
+
+  it('Track A: the department\'s own HOD reviews, then Head of Finance (and the CEO from $300)', async () => {
+    const staff = w.people['hr.staff']!;
+    const mid = await req.createPurchaseRequest(w.db, staff, { track: 'hq', orgUnitId: w.units.HR!, lines: [{ itemId: await w.item('GEN-038'), qty: 30 }] });
+    let d = await req.getRequest(w.db, w.admin, mid.id);
+    const band = d.estimatedTotal! >= 300 ? 'Track A — HQ: $300 and above' : 'Track A — HQ: $100 – $299';
+    expect(d.approvals[0]!.ruleName).toBe(band);
+    await expect(req.actOnRequest(w.db, w.people['ops.head']!, mid.id, approve)).rejects.toThrow(/waiting for/); // Operation only reviews stores
+    await req.actOnRequest(w.db, w.people['hr.hod']!, mid.id, approve);
+    await req.actOnRequest(w.db, w.people.finhead!, mid.id, approve);
+    if (band.includes('300')) await req.actOnRequest(w.db, w.people.ceo!, mid.id, approve);
+    d = await req.getRequest(w.db, w.admin, mid.id);
+    expect(d.status).toBe('approved');
+    expect(d.approvals[0]!.steps[0]!.actedBy).toBe('hr.hod');
   });
 
   it('two approvers acting at the same moment: exactly one succeeds', async () => {
     const pr = await req.createPurchaseRequest(w.db, w.people['kdt.staff']!, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 10 }] });
-    await req.actOnRequest(w.db, w.people['kdt.hod']!, pr.id, approve);
+    await req.actOnRequest(w.db, w.people['ops.head']!, pr.id, approve);
+    // Either Head of Finance (e.g. TE Vengsrean or TAING Pengpheng) can act on the step.
     const finhead2 = (await master.upsertUser(w.db, w.admin, null, { email: 'finhead2@tubecafecambodia.com', name: 'finhead2', orgUnitId: w.units.FIN!, roleKeys: ['finance_head'] })).id;
     const results = await Promise.allSettled([
       req.actOnRequest(w.db, w.people.finhead!, pr.id, approve),
@@ -93,8 +132,8 @@ describe('approval matrix — enforced by the server', () => {
   it('reject cancels the lines; request changes lets the requester resubmit with a fresh chain', async () => {
     const staff = w.people['kdt.staff']!;
     const pr = await req.createPurchaseRequest(w.db, staff, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 10 }] });
-    await expect(req.actOnRequest(w.db, w.people['kdt.hod']!, pr.id, { action: 'request_changes' } as never)).rejects.toThrow(/reason/);
-    await req.actOnRequest(w.db, w.people['kdt.hod']!, pr.id, { action: 'request_changes', comment: 'Too much — halve it' });
+    await expect(req.actOnRequest(w.db, w.people['ops.head']!, pr.id, { action: 'request_changes' } as never)).rejects.toThrow(/reason/);
+    await req.actOnRequest(w.db, w.people['ops.head']!, pr.id, { action: 'request_changes', comment: 'Too much — halve it' });
     expect((await req.getRequest(w.db, staff, pr.id)).status).toBe('changes_requested');
     await req.resubmitPurchaseRequest(w.db, staff, pr.id, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 5 }] });
     const d = await req.getRequest(w.db, staff, pr.id);
@@ -103,7 +142,7 @@ describe('approval matrix — enforced by the server', () => {
     expect(d.approvals).toHaveLength(2);
 
     const pr2 = await req.createPurchaseRequest(w.db, staff, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('I00043'), qty: 10 }] });
-    await req.actOnRequest(w.db, w.people['kdt.hod']!, pr2.id, { action: 'reject', comment: 'Not needed' });
+    await req.actOnRequest(w.db, w.people['ops.head']!, pr2.id, { action: 'reject', comment: 'Not needed' });
     const r = await req.getRequest(w.db, staff, pr2.id);
     expect(r.status).toBe('rejected');
     expect(r.lines[0]!.status).toBe('cancelled');
@@ -131,6 +170,7 @@ describe('petty cash (below $100)', () => {
     expect(pc.isPettyCash).toBe(true);
     let d = await req.getRequest(w.db, w.admin, pc.id);
     expect(d.approvals[0]!.steps.map((s) => s.actionLabel)).toEqual(['Acknowledged']);
+    await expect(req.actOnRequest(w.db, w.people['ops.head']!, pc.id, approve)).rejects.toThrow(/waiting for/); // the store's own manager acknowledges
     await req.actOnRequest(w.db, w.people['tk.hod']!, pc.id, approve);
     d = await req.getRequest(w.db, w.admin, pc.id);
     expect(d.status).toBe('petty_cash_approved');

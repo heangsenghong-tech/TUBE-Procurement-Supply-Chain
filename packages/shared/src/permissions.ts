@@ -48,6 +48,8 @@ export const DEFAULT_ROLES: RoleDefinition[] = [
     permissions: [...REQUESTER, 'request.view_all', 'pricing.view', 'supplier.view', 'po.view', 'contract.view', 'spend.view', 'spend.supplier.view', 'pettycash.view', 'audit.view'] },
   { key: 'supply_chain_manager', name: 'Supply Chain Manager', approver: true, description: 'Full Procurement & Supply Chain control.',
     permissions: [...PROCUREMENT, 'pettycash.view', 'approval.override', 'settings.manage', 'audit.view'] },
+  { key: 'head_of_operation', name: 'Head of Operation', approver: true, description: 'Reviews every store (Track B) request of $100 or more.',
+    permissions: [...REQUESTER, 'request.view_all', 'pricing.view'] },
   { key: 'procurement_officer', name: 'Procurement Officer', description: 'Day-to-day sourcing and purchase orders.', permissions: [...PROCUREMENT] },
   { key: 'finance_head', name: 'Head of Finance / Accounting Manager', approver: true, description: 'Approves PRs and POs; reconciles petty cash.',
     permissions: [...REQUESTER, 'request.view_all', 'pricing.view', 'supplier.view', 'po.view', 'contract.view', 'spend.view', 'spend.supplier.view', 'pettycash.view', 'pettycash.reconcile'] },

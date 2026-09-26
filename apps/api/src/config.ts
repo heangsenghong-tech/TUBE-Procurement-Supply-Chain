@@ -17,6 +17,9 @@ const schema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   // Comma-separated Google Workspace domains allowed to sign in.
   GOOGLE_ALLOWED_DOMAINS: z.string().default('tubecafecambodia.com'),
+  // Comma-separated individual Google accounts outside those domains that may also sign in
+  // (e.g. an authorised Finance proxy on Gmail). They still need to be added as users first.
+  GOOGLE_ALLOWED_EMAILS: z.string().default(''),
   // Lets you pick a demo account without Google — refused in production.
   DEV_LOGIN: z.enum(['0', '1']).default('0'),
   TRUST_PROXY: z.enum(['0', '1']).default('0'),
@@ -28,7 +31,7 @@ const schema = z.object({
   WEB_DIST: z.string().default(path.resolve(here, '../../web/dist'))
 });
 
-export type Config = z.infer<typeof schema> & { cookieSecure: boolean; allowedDomains: string[] };
+export type Config = z.infer<typeof schema> & { cookieSecure: boolean; allowedDomains: string[]; allowedEmails: string[] };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // Treat empty variables (e.g. "KEY=" in .env) as not set.
@@ -48,6 +51,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     ...c,
     COOKIE_SECRET: c.COOKIE_SECRET ?? crypto.randomBytes(32).toString('hex'),
     cookieSecure: c.PUBLIC_URL.startsWith('https://'),
-    allowedDomains: c.GOOGLE_ALLOWED_DOMAINS.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean)
+    allowedDomains: c.GOOGLE_ALLOWED_DOMAINS.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean),
+    allowedEmails: c.GOOGLE_ALLOWED_EMAILS.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean)
   };
 }

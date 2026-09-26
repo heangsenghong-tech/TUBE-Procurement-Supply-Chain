@@ -12,7 +12,10 @@ with Docker, about 2 GB RAM and 20 GB disk, and a name people can reach it by.
 4. Copy the **Client ID** and **Client secret** into `deploy/.env`.
 
 Only verified accounts from `GOOGLE_ALLOWED_DOMAINS` (default `tubecafecambodia.com`) are accepted,
-and only if an administrator has added that email in **Users & Stores**.
+and only if an administrator has added that email in **Users & Stores**. Individual outside
+accounts can be allowed by exact address in `GOOGLE_ALLOWED_EMAILS` — `.env.example` lists
+TAING Pengpheng's Gmail, the authorised Finance proxy. What they can do still comes only from the
+roles assigned to them in the app.
 
 ## 2. Configure and start
 
@@ -26,13 +29,17 @@ docker compose up -d --build
 - **Company-network server without a public domain:** set `TLS_MODE=tls internal`. Caddy issues its own certificate; install Caddy's root certificate on staff devices (or use your company's certificate). Google sign-in still works because the redirect happens in the browser.
 
 On first start the app creates the tables, loads roles, the approval matrix, the real item &
-supplier master, and the administrator from `BOOTSTRAP_ADMIN_EMAIL`. Sign in with that Google
-account, then:
+supplier master, the company's 11 HQ departments and 79 stores (`data/seed/departments.csv`,
+`data/seed/stores.csv`; KDT company-owned, the rest franchisees), and the administrator from
+`BOOTSTRAP_ADMIN_EMAIL`. Sign in with that Google account, then in **Users & Stores**:
 
-1. **Users & Stores → Stores & departments:** add every store (or import CSV).
-2. **Users & Stores → Users:** add people with their store/department and role (or import CSV).
-3. Set each store's/department's **HOD** — they approve that unit's requests.
-4. Give the Head of Finance, CEO and Supply Chain Manager their roles.
+1. **Users → Bulk add people:** import `data/org/approvers.csv` (Head of Operation, both Heads of
+   Finance, CEO), then everyone else with their store/department and role.
+2. **Stores & departments → Bulk add:** import `data/seed/departments.csv` again — this time its
+   *HOD Email* column sets the department heads. Do the same with a stores file listing each
+   store's manager in *HOD Email* (they acknowledge that store's petty cash). A blank HOD Email or
+   Ownership leaves the current value alone, so partial files are safe.
+3. Check **Approval Rules → Who would approve this?** for a store and a department.
 
 ## 3. Training environment
 

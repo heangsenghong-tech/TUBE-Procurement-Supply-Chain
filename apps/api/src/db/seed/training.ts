@@ -1,5 +1,5 @@
-// Demo data for the Training environment only (APP_ENV=training): stores, one person per role,
-// and transactions in every state. Created through the real services, so it follows the same
+// Demo data for the Training environment only (APP_ENV=training): one person per role, on the
+// company's real stores and departments, and transactions in every state. Created through the real services, so it follows the same
 // rules as real data. Production never runs this.
 import { eq, inArray } from 'drizzle-orm';
 import type { Db } from '../client';
@@ -11,24 +11,20 @@ import * as master from '../../modules/master/service';
 
 const DOMAIN = 'training.tubecafe.demo';
 
-const STORES = [
-  ['TK', 'Toul Kork'], ['BKK', 'BKK1'], ['CDP', 'CDP'], ['AEON1', 'AEON Mall 1'], ['AEON2', 'AEON Mall 2'],
-  ['RSY', 'Russey Keo'], ['SEN', 'Sen Sok'], ['CHM', 'Chamkar Mon'], ['DK', 'Daun Penh']
-] as const;
-
 const PEOPLE = [
   { key: 'admin', name: 'Demo Admin', unit: 'SCP', roles: ['super_admin', 'export_authorized'] },
   { key: 'ceo', name: 'Demo CEO', unit: 'MGT', roles: ['ceo'] },
   { key: 'scm', name: 'Demo Supply Chain Manager', unit: 'SCP', roles: ['supply_chain_manager', 'export_authorized'] },
   { key: 'buyer', name: 'Demo Purchasing Officer', unit: 'SCP', roles: ['procurement_officer'] },
   { key: 'finhead', name: 'Demo Head of Finance', unit: 'FIN', roles: ['finance_head'] },
+  { key: 'acct.manager', name: 'Demo Accounting Manager (Head of Finance)', unit: 'FIN', roles: ['finance_head'] },
   { key: 'finance', name: 'Demo Finance Officer', unit: 'FIN', roles: ['finance'] },
   { key: 'warehouse', name: 'Demo Warehouse Officer', unit: 'SCP', roles: ['warehouse'] },
   { key: 'kdt.manager', name: 'Demo KDT Store Manager (HOD)', unit: 'KDT', roles: ['requester'], hodOf: 'KDT' },
   { key: 'kdt.staff', name: 'Demo KDT Barista', unit: 'KDT', roles: ['requester'] },
-  { key: 'tk.manager', name: 'Demo Toul Kork Manager (HOD)', unit: 'TK', roles: ['requester'], hodOf: 'TK' },
-  { key: 'tk.staff', name: 'Demo Toul Kork Barista', unit: 'TK', roles: ['requester'] },
-  { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester'], hodOf: 'OPS' },
+  { key: 'tk.manager', name: 'Demo Toul Kork Samai Square Manager (HOD)', unit: 'TKS', roles: ['requester'], hodOf: 'TKS' },
+  { key: 'tk.staff', name: 'Demo Toul Kork Samai Square Barista', unit: 'TKS', roles: ['requester'] },
+  { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester', 'head_of_operation'], hodOf: 'OPS' },
   { key: 'mkt.staff', name: 'Demo Marketing Executive', unit: 'MKT', roles: ['requester'] },
   { key: 'mkt.head', name: 'Demo Head of Marketing (HOD)', unit: 'MKT', roles: ['requester'], hodOf: 'MKT' }
 ];
@@ -43,7 +39,6 @@ export async function seedTraining(db: Db) {
   await db.insert(t.userRoles).values({ userId: system!.id, roleId: superRole!.id });
   const sys = (await loadActor(db, system!.id))!;
 
-  for (const [code, name] of STORES) await master.upsertOrgUnit(db, sys, null, { code, name, type: 'store', ownership: 'franchisee' });
   const units = await master.listOrgUnits(db);
   const unit = (code: string) => units.find((u) => u.code === code)!;
 
@@ -60,9 +55,10 @@ export async function seedTraining(db: Db) {
   // Walks a request through whatever approval chain the engine assigned to it.
   const approveFully = async (requestId: string, hodKey: string) => {
     const viewer = await as('scm');
-    for (const key of [hodKey, 'finhead', 'ceo']) {
-      if ((await req.getRequest(db, viewer, requestId)).status !== 'pending_approval') break;
-      await req.actOnRequest(db, await as(key), requestId, { action: 'approve' });
+    for (let step = 0; step < 6 && (await req.getRequest(db, viewer, requestId)).status === 'pending_approval'; step++) {
+      for (const key of [hodKey, 'ops.head', 'finhead', 'ceo']) {
+        try { await req.actOnRequest(db, await as(key), requestId, { action: 'approve' }); break; } catch { /* not this person's step */ }
+      }
     }
   };
   const item = async (code: string) => (await db.query.items.findFirst({ where: eq(t.items.code, code) }))!.id;
@@ -75,16 +71,16 @@ export async function seedTraining(db: Db) {
 
   // 2) Another store needs the same bean — shows consolidation across stores.
   const tkStaff = await as('tk.staff');
-  const pr2 = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Weekly top-up',
+  const pr2 = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TKS').id, purpose: 'Weekly top-up',
     lines: [{ itemId: await item('I00043'), qty: 15 }, { itemId: await item('NEW-022'), qty: 1000 }] });
   await approveFully(pr2.id, 'tk.manager');
 
-  // 3) Waiting for the HOD.
+  // 3) A store request of $100+ waiting for the Head of Operation.
   await req.createPurchaseRequest(db, kdtStaff, { track: 'store', orgUnitId: unit('KDT').id, purpose: 'Cleaning supplies',
     lines: [{ itemId: await item('O000011'), qty: 6 }] });
 
   // 4) Petty cash: HOD acknowledges, goes to Finance's register, never to Procurement.
-  const pc = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Limes for tonight',
+  const pc = await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TKS').id, purpose: 'Limes for tonight',
     lines: [{ itemId: await item('I00017'), qty: 10 }] });
   await req.actOnRequest(db, await as('tk.manager'), pc.id, { action: 'approve' });
 
@@ -133,16 +129,16 @@ export async function seedTraining(db: Db) {
   const typeOf = async (key: string) => (await db.query.requestTypes.findFirst({ where: eq(t.requestTypes.key, key) }))!.id;
   const sv1 = await req.createServiceRequest(db, kdtStaff, { track: 'store', orgUnitId: unit('KDT').id, requestTypeId: await typeOf('maintenance'),
     subject: 'Air-con leaking above the bar', description: 'Water drips onto the counter near the espresso machine every afternoon.',
-    isUrgent: true, urgentReason: 'Water near electrical equipment' });
-  await req.actOnRequest(db, await as('kdt.manager'), sv1.id, { action: 'approve' });
+    estimatedCost: 180, isUrgent: true, urgentReason: 'Water near electrical equipment' });
+  await approveFully(sv1.id, 'kdt.manager'); // $180: Head of Operation → Head of Finance, like a purchase
   const sv2 = await req.createServiceRequest(db, await as('ops.head'), { track: 'hq', orgUnitId: unit('OPS').id, requestTypeId: await typeOf('supplier_request'),
-    subject: 'Second supplier for fresh milk', description: 'We rely on one milk supplier. Please find a backup that can deliver to all stores by 7am.' });
+    subject: 'Second supplier for fresh milk', description: 'We rely on one milk supplier. Please find a backup that can deliver to all stores by 7am.', estimatedCost: 0 });
   // Operation's HOD raised it, so the Supply Chain Manager acknowledges it as a recorded override.
   await req.actOnRequest(db, await as('scm'), sv2.id, { action: 'approve' });
   await req.assignServiceRequest(db, buyer, sv2.id);
 
   // 10) An urgent purchase waiting for approval.
-  await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TK').id, purpose: 'Grinder burrs worn out',
+  await req.createPurchaseRequest(db, tkStaff, { track: 'store', orgUnitId: unit('TKS').id, purpose: 'Grinder burrs worn out',
     requestTypeId: await typeOf('equipment'), isUrgent: true, urgentReason: 'Grinder failing — can\'t serve espresso',
     lines: [{ itemId: await item('GEN-001'), qty: 1 }] });
 

@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import { DEFAULT_ROLES } from '@tube/shared';
 import type { Db } from '../client';
 import * as t from '../schema';
+import { parseCsv } from '../../modules/master/import';
 
 // Canonical units of measure. The prototype's data spells several of these differently
 // (BOX/Box, BTL/Btl, KG/Kg, PCS/Pcs …); they are normalised on import.
@@ -21,24 +22,32 @@ export function normaliseUom(raw: string): string {
   return key;
 }
 
-// The company's real approval matrix (Policy & Procedure). Editable afterwards in Settings.
+// The company's approval structure (confirmed by Supply Chain & Procurement, Sep 2026). One pattern
+// for both tracks, Track A — HQ and Track B — Stores; "HOD" is whoever heads the requesting unit:
+//   < $100      requester → unit HOD acknowledges → petty cash, straight to Finance (no sourcing)
+//   $100–$299   requester → HOD reviews → Head of Finance approves
+//   $300+       requester → HOD reviews → Head of Finance reviews → CEO approves
+// For stores, the HOD at $100+ is the Head of Operation; below $100 it's the store's own Store or
+// Area Manager (org_units.hod_user_id). HQ departments use their own head at every tier.
+// Editable afterwards in Approval Rules.
+const hod = (actionLabel: string) => ({ approverType: 'hod' as const, actionLabel });
+const role = (roleKey: string, actionLabel: string) => ({ approverType: 'role' as const, roleKey, actionLabel });
 const APPROVAL_MATRIX = [
-  { documentKind: 'request' as const, name: 'Below $100 — Petty Cash (HOD acknowledges)', min: 0, max: 100, pettyCash: true,
-    steps: [{ approverType: 'hod' as const, actionLabel: 'Acknowledged' }] },
-  { documentKind: 'request' as const, name: '$100 – $299', min: 100, max: 300, pettyCash: false,
-    steps: [{ approverType: 'hod' as const, actionLabel: 'Reviewed/Acknowledged' },
-      { approverType: 'role' as const, roleKey: 'finance_head', actionLabel: 'Approved' }] },
-  { documentKind: 'request' as const, name: '$300 and above', min: 300, max: null, pettyCash: false,
-    steps: [{ approverType: 'hod' as const, actionLabel: 'Reviewed/Acknowledged' },
-      { approverType: 'role' as const, roleKey: 'finance_head', actionLabel: 'Reviewed' },
-      { approverType: 'role' as const, roleKey: 'ceo', actionLabel: 'Approved' }] },
-  { documentKind: 'po' as const, name: 'Below $100 — no approval needed', min: 0, max: 100, pettyCash: false, steps: [] },
-  { documentKind: 'po' as const, name: '$100 – $299', min: 100, max: 300, pettyCash: false,
-    steps: [{ approverType: 'role' as const, roleKey: 'supply_chain_manager', actionLabel: 'Reviewed' },
-      { approverType: 'role' as const, roleKey: 'finance_head', actionLabel: 'Approved' }] },
-  { documentKind: 'po' as const, name: '$300 and above', min: 300, max: null, pettyCash: false,
-    steps: [{ approverType: 'role' as const, roleKey: 'finance_head', actionLabel: 'Reviewed' },
-      { approverType: 'role' as const, roleKey: 'ceo', actionLabel: 'Approved' }] }
+  { documentKind: 'request' as const, name: 'Below $100 — Petty Cash (HOD acknowledges)', min: 0, max: 100, pettyCash: true, conditions: {},
+    steps: [hod('Acknowledged')] },
+  { documentKind: 'request' as const, name: 'Track A — HQ: $100 – $299', min: 100, max: 300, pettyCash: false, conditions: { track: 'hq' },
+    steps: [hod('Reviewed'), role('finance_head', 'Approved')] },
+  { documentKind: 'request' as const, name: 'Track A — HQ: $300 and above', min: 300, max: null, pettyCash: false, conditions: { track: 'hq' },
+    steps: [hod('Reviewed'), role('finance_head', 'Reviewed'), role('ceo', 'Approved')] },
+  { documentKind: 'request' as const, name: 'Track B — Stores: $100 – $299', min: 100, max: 300, pettyCash: false, conditions: { track: 'store' },
+    steps: [role('head_of_operation', 'Reviewed'), role('finance_head', 'Approved')] },
+  { documentKind: 'request' as const, name: 'Track B — Stores: $300 and above', min: 300, max: null, pettyCash: false, conditions: { track: 'store' },
+    steps: [role('head_of_operation', 'Reviewed'), role('finance_head', 'Reviewed'), role('ceo', 'Approved')] },
+  { documentKind: 'po' as const, name: 'Below $100 — no approval needed', min: 0, max: 100, pettyCash: false, conditions: {}, steps: [] },
+  { documentKind: 'po' as const, name: '$100 – $299', min: 100, max: 300, pettyCash: false, conditions: {},
+    steps: [role('supply_chain_manager', 'Reviewed'), role('finance_head', 'Approved')] },
+  { documentKind: 'po' as const, name: '$300 and above', min: 300, max: null, pettyCash: false, conditions: {},
+    steps: [role('finance_head', 'Reviewed'), role('ceo', 'Approved')] }
 ];
 
 // The request types offered in "+ New Request" (master spec §7). Supply chain and project types
@@ -65,10 +74,24 @@ const REQUEST_TYPES = [
     description: 'Arrange a repair or service visit (air-con, machines, facilities).' }
 ] as const;
 
+// Used only when data/seed/departments.csv is missing.
 const DEPARTMENTS = [
-  ['SCP', 'Supply Chain & Procurement'], ['OPS', 'Operation'], ['MKT', 'Marketing'],
-  ['IT', 'IT'], ['HR', 'HR'], ['FIN', 'Finance'], ['MGT', 'Management']
+  ['SCP', 'Supply Chain'], ['OPS', 'Operation'], ['MKT', 'Marketing'],
+  ['IT', 'IT'], ['HR', 'Human Resource'], ['FIN', 'Finance'], ['MGT', 'CEO Office']
 ] as const;
+
+// Code, Name, Type, Ownership columns of a Users & Stores import file (other columns ignored).
+function readUnits(file: string) {
+  if (!fs.existsSync(file)) return null;
+  const [header, ...rows] = parseCsv(fs.readFileSync(file, 'utf8'));
+  const col = (name: string) => header!.findIndex((h) => h.trim().toLowerCase() === name.toLowerCase());
+  const [code, name, type, ownership] = ['Code', 'Name', 'Type', 'Ownership'].map(col) as [number, number, number, number];
+  return rows.map((r) => ({
+    code: r[code]!.trim(), name: r[name]!.trim(),
+    type: r[type]!.trim().toLowerCase() === 'store' ? 'store' as const : 'department' as const,
+    ownership: r[type]!.trim().toLowerCase() === 'store' ? (r[ownership]?.trim().toLowerCase() === 'franchiser' ? 'franchiser' as const : 'franchisee' as const) : null
+  }));
+}
 
 interface SeedOptions {
   seedDir: string;
@@ -99,24 +122,25 @@ export async function seedReference(db: Db, opts: SeedOptions) {
     let priority = 100;
     for (const r of APPROVAL_MATRIX) {
       const [rule] = await db.insert(t.approvalRules).values({
-        documentKind: r.documentKind, name: r.name, minAmount: r.min, maxAmount: r.max, isPettyCash: r.pettyCash, priority: priority++
+        documentKind: r.documentKind, name: r.name, minAmount: r.min, maxAmount: r.max, isPettyCash: r.pettyCash, conditions: r.conditions, priority: priority++
       }).returning();
       if (r.steps.length) {
         await db.insert(t.approvalRuleSteps).values(r.steps.map((s, i) => ({
-          ruleId: rule!.id, seq: i + 1, approverType: s.approverType, roleKey: 'roleKey' in s ? s.roleKey : null, actionLabel: s.actionLabel
+          ruleId: rule!.id, seq: i + 1, approverType: s.approverType, roleKey: 'roleKey' in s ? (s.roleKey as string) : null, actionLabel: s.actionLabel
         })));
       }
     }
     log.push('approval matrix');
   }
 
-  // Service requests: the HOD acknowledges, then Procurement handles them. Added to existing
-  // installations too, unless an administrator already has an active service rule.
+  // Service requests follow the purchase value tiers above; below $100 they aren't petty cash,
+  // so the HOD acknowledges and Procurement handles them. Added to existing installations too,
+  // unless an administrator already has a service rule.
   const serviceRule = await db.select({ id: t.approvalRules.id }).from(t.approvalRules)
     .where(sql`${t.approvalRules.documentKind} = 'request' and ${t.approvalRules.conditions} ->> 'handling' = 'service'`).limit(1);
   if (!serviceRule[0]) {
     const [rule] = await db.insert(t.approvalRules).values({
-      documentKind: 'request', name: 'Service requests — HOD acknowledges', minAmount: 0, maxAmount: null,
+      documentKind: 'request', name: 'Service requests below $100 — HOD acknowledges', minAmount: 0, maxAmount: 100,
       conditions: { handling: 'service' }, priority: 90
     }).returning();
     await db.insert(t.approvalRuleSteps).values({ ruleId: rule!.id, seq: 1, approverType: 'hod', actionLabel: 'Acknowledged' });
@@ -125,11 +149,15 @@ export async function seedReference(db: Db, opts: SeedOptions) {
 
   const [{ n: unitCount }] = await db.select({ n: sql<number>`count(*)::int` }).from(t.orgUnits) as [{ n: number }];
   if (unitCount === 0) {
-    await db.insert(t.orgUnits).values([
-      ...DEPARTMENTS.map(([code, name]) => ({ code, name, type: 'department' as const })),
-      { code: 'KDT', name: 'KDT', type: 'store' as const, ownership: 'franchiser' as const }
-    ]);
-    log.push('departments + KDT store');
+    // The company's HQ departments and stores. KDT runs the Track B store process but is
+    // company-owned (Tube Cafe Co., Ltd. pays directly); the other stores are franchisees.
+    // HODs are set afterwards by importing the same files once the people exist.
+    const departments = readUnits(path.join(opts.seedDir, 'departments.csv'))
+      ?? DEPARTMENTS.map(([code, name]) => ({ code, name, type: 'department' as const, ownership: null }));
+    const stores = readUnits(path.join(opts.seedDir, 'stores.csv'))
+      ?? [{ code: 'KDT', name: 'KDT', type: 'store' as const, ownership: 'franchiser' as const }];
+    await db.insert(t.orgUnits).values([...departments, ...stores]);
+    log.push(`${departments.length} departments, ${stores.length} stores`);
   }
 
   // Real Item & Supplier Master, exported from the live prototype.

@@ -122,7 +122,8 @@ export async function importSuppliers(db: Db, actor: Actor, text: string, dryRun
   return result;
 }
 
-// Code, Name, Type (store/department), Ownership (franchiser/franchisee), HOD Email
+// Code, Name, Type (store/department), Ownership (franchiser/franchisee), HOD Email.
+// A blank Ownership or HOD Email keeps what an existing store/department already has.
 export async function importOrgUnits(db: Db, actor: Actor, text: string, dryRun: boolean): Promise<ImportResult> {
   requirePermission(actor, 'master.manage');
   const recs = toRecords(text, ['Code', 'Name', 'Type']);
@@ -136,7 +137,7 @@ export async function importOrgUnits(db: Db, actor: Actor, text: string, dryRun:
     if (hodEmail && !hod) { errors.push({ row: r.rowNo, message: `No user with email ${hodEmail} — import users first, then set HODs` }); continue; }
     const parsed = orgUnitInput.safeParse({
       code: r.get('Code'), name: r.get('Name'), type: r.get('Type').toLowerCase(),
-      ownership: r.get('Ownership').toLowerCase() || undefined, hodUserId: hod?.id ?? null
+      ownership: r.get('Ownership').toLowerCase() || undefined, hodUserId: hod?.id
     });
     if (!parsed.success) { errors.push({ row: r.rowNo, message: issues(parsed.error) }); continue; }
     valid.push({ id: units.find((u) => u.code.toLowerCase() === parsed.data.code.toLowerCase())?.id ?? null, input: parsed.data });

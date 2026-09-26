@@ -134,13 +134,16 @@ export async function upsertOrgUnit(db: Db, actor: Actor, id: string | null, inp
       const hod = await tx.query.users.findFirst({ where: and(eq(t.users.id, input.hodUserId), eq(t.users.active, true)) });
       if (!hod) throw badRequest('The HOD must be an active user.');
     }
+    const before = id ? await tx.query.orgUnits.findFirst({ where: eq(t.orgUnits.id, id) }) : undefined;
+    if (id && !before) throw notFound('Store/department');
+    // Ownership and HOD left out (e.g. blank in an import) keep their current values; null clears the HOD.
     const values = {
-      code: input.code, name: input.name, type: input.type, ownership: input.type === 'store' ? (input.ownership ?? 'franchisee') : null,
-      hodUserId: input.hodUserId ?? null, active: input.active ?? true, updatedAt: new Date()
+      code: input.code, name: input.name, type: input.type,
+      ownership: input.type === 'store' ? (input.ownership ?? before?.ownership ?? 'franchisee') : null,
+      hodUserId: input.hodUserId === undefined ? (before?.hodUserId ?? null) : input.hodUserId,
+      active: input.active ?? true, updatedAt: new Date()
     };
-    if (id) {
-      const before = await tx.query.orgUnits.findFirst({ where: eq(t.orgUnits.id, id) });
-      if (!before) throw notFound('Store/department');
+    if (id && before) {
       await tx.update(t.orgUnits).set(values).where(eq(t.orgUnits.id, id));
       await audit(tx, { userId: actor.id, action: 'org_unit.update', entityType: 'org_unit', entityId: id, before, after: values });
       return { id };

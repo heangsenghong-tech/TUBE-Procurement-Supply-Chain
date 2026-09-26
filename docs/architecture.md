@@ -12,7 +12,7 @@ look, and moves it onto a real backend where **every rule is enforced by the ser
 | 3 | Spend **by supplier** is visible only to Procurement, Finance and leadership (`spend.supplier.view`). |
 | 4 | **Petty cash (< $100):** a PR is still raised; only the requester's HOD acknowledges it; it goes to Finance's Petty Cash register for reconciliation against the physical invoice and **never** enters Review, Quote Comparison or PO. |
 | 5 | **One PO per supplier**, with multiple item lines. |
-| 6 | **Sign in with Google** (Google Workspace), no passwords. Only people an administrator has added can sign in. |
+| 6 | **Sign in with Google** (Google Workspace), no passwords. Only people an administrator has added can sign in. Named outside accounts may be allowed individually (`GOOGLE_ALLOWED_EMAILS`) — e.g. the Finance proxy's Gmail. |
 | 7 | Supplier contact file to follow; the master was seeded from the live prototype (160 items, 26 suppliers). |
 | 8 | Hosting undecided — Docker Compose deploys identically to a company server or a VPS. |
 | 9 | "Urgent Purchase" is an **urgent flag with a reason** on any purchase or service request, rather than a separate type, so urgent IT, equipment or maintenance requests keep their own type and rules. |
@@ -75,7 +75,7 @@ one workflow (`handling`), and administrators add or retire types in **Request T
 |---|---|---|
 | purchase | Purchase Request, IT Procurement, Equipment, Furniture, Uniform, Office Supplies | Catalog items → approval by value (or petty cash) → Review & Consolidate → QCS/PO |
 | sample | New Item / Sample Request | Sourcing → evaluation (Pass/Fail loop) |
-| service | Supplier Request, Price Inquiry, Contract Request, Maintenance | HOD acknowledges → Procurement's **Service Requests** queue → taken by a buyer → resolved with an outcome the requester sees |
+| service | Supplier Request, Price Inquiry, Contract Request, Maintenance | Approved by its **estimated cost** on the same tiers as a purchase (below $100 the HOD acknowledges; never petty cash) → Procurement's **Service Requests** queue → taken by a buyer → resolved with an outcome the requester sees |
 
 Supply chain and project types arrive with their modules. A type's key and workflow are frozen
 once it has requests. Any purchase or service request can be marked **urgent** (with a reason).
@@ -100,16 +100,25 @@ either the requesting unit's **HOD** (resolved live from `org_units.hod_user_id`
 has no eligible approver (no HOD set, or the HOD raised it), a holder of `approval.override`
 (Supply Chain Manager) may act — recorded as an override. Reject / Request changes require a reason.
 
-Seeded with the company's real matrix:
+Seeded with the company's confirmed structure — one pattern for both tracks. "HOD" is whoever heads
+the requesting unit:
 
-| Value | PR | PO |
-|---|---|---|
-| < $100 | Petty cash: HOD acknowledges → Finance register | No approval |
-| $100–$299 | HOD → Head of Finance | Supply Chain Manager → Head of Finance |
-| $300+ | HOD → Head of Finance → CEO | Head of Finance → CEO |
+| Value | Track A — HQ departments | Track B — Stores | PO |
+|---|---|---|---|
+| < $100 | Petty cash: the department's HOD acknowledges → Finance register | Petty cash: the store's own Store/Area Manager (its HOD) acknowledges → Finance register | No approval |
+| $100–$299 | Department HOD reviews → Head of Finance approves | Head of Operation reviews → Head of Finance approves | Supply Chain Manager → Head of Finance |
+| $300+ | Department HOD reviews → Head of Finance reviews → CEO approves | Head of Operation reviews → Head of Finance reviews → CEO approves | Head of Finance → CEO |
+
+"Head of Finance" and "Head of Operation" are roles, so anyone holding the role can act on that step
+(e.g. both the Head of Finance and the Accounting Manager). Service requests (maintenance, contracts…)
+use the same tiers on their estimated cost, except that below $100 they go to Procurement rather than
+petty cash. Store ownership doesn't change routing:
+KDT follows the Track B process but is tagged **company-owned** (Tube Cafe Co., Ltd. pays), while
+other stores are franchisee-billed. The named approvers are in `data/org/approvers.csv`, ready for
+**Users & Stores → Bulk add people**.
 
 ### Roles (configurable)
-Super Admin · CEO · Supply Chain Manager · Procurement Officer · Head of Finance · Finance ·
+Super Admin · CEO · Supply Chain Manager · Head of Operation · Procurement Officer · Head of Finance · Finance ·
 Warehouse · Store/Department User · Export Authorization. Each is a bundle of permission keys
 (`packages/shared/src/permissions.ts`), editable per role in the database.
 

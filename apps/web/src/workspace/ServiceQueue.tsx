@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { api, date, timeAgo } from '../lib/api';
+import { api, date, money, timeAgo } from '../lib/api';
 import { Card, Empty, ErrorText, Loading, StatusTag, UrgentTag, useMe } from '../lib/ui';
 import type { ServiceQueueEntry } from '../lib/types';
 
@@ -31,7 +31,7 @@ export function ServiceQueuePanel() {
         <div key={r.id} className="list-row">
           <Link to={`/requests/${r.id}`} style={{ textDecoration: 'none', flex: 1 }}>
             <strong>{r.number}</strong> · {r.subject}{r.isUrgent && <UrgentTag reason={r.urgentReason} />}<br />
-            <span className="sub">{r.typeName} · {r.orgUnitName} · {r.requesterName} · {timeAgo(r.submittedAt)}{r.requiredDate ? ` · needed ${date(r.requiredDate)}` : ''}</span>
+            <span className="sub">{r.typeName} · {r.orgUnitName} · {r.requesterName} · {timeAgo(r.submittedAt)}{r.requiredDate ? ` · needed ${date(r.requiredDate)}` : ''}{r.estimatedCost > 0 ? ` · est. ${money(r.estimatedCost)}` : ''}</span>
           </Link>
           <span className="flex gap-2 items-center">
             {r.assigneeName ? <span className="sub">{r.assigneeName}</span> : <button className="btn-ghost" onClick={() => take(r.id)}>Take</button>}
