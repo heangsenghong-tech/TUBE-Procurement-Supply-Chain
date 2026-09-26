@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useParams } from 'react-router';
-import { SAMPLE_EVALUATION_STATUSES, REQUEST_STATUSES } from '@tube/shared';
+import { OWNERSHIP, SAMPLE_EVALUATION_STATUSES, REQUEST_STATUSES, TRACKS } from '@tube/shared';
 import { api, date, dateTime, money, qty, unitPrice } from '../lib/api';
 import { ApprovalActions, ApprovalSteps, Card, ErrorText, Field, Letterhead, Loading, Modal, StatusTag, UrgentTag } from '../lib/ui';
 import type { RequestDetail } from '../lib/types';
@@ -94,7 +94,7 @@ export function RequestDetailPage() {
       )}
       <Card
         title={<span>{r.number} {r.isPettyCash && <span className="tag tag-petty">Petty cash</span>}{r.isUrgent && <UrgentTag reason={r.urgentReason} />}</span>}
-        note={`${r.requestType.name} · ${r.track === 'store' ? 'Store' : 'HQ'} · ${r.orgUnit.name} · ${r.requester.name} · ${dateTime(r.submittedAt)}`}
+        note={`${r.requestType.name} · ${TRACKS[r.track]} · ${r.orgUnit.name}${r.orgUnit.ownership ? ` (${OWNERSHIP[r.orgUnit.ownership]})` : ''} · ${r.requester.name} · ${dateTime(r.submittedAt)}`}
         actions={<>
           <StatusTag status={r.status} />
           <button className="btn-ghost" onClick={() => window.print()}>Print / PDF</button>

@@ -112,7 +112,7 @@ describe('authorization over HTTP', () => {
     const price = await app.inject({ method: 'POST', url: `/api/items/${bean.id}/prices`, headers: h, payload: { supplierId: await w.supplier('SUP-0011'), unitPrice: 0.01, rank: 1 } });
     expect(price.statusCode).toBe(403);
 
-    const hod = await signIn('kdt.hod');
+    const hod = await signIn('ops.head'); // Head of Operation reviews every store request of $100+
     const inbox = (await app.inject({ method: 'GET', url: '/api/approvals/inbox', headers: hod })).json();
     expect(inbox.some((x: { documentId: string }) => x.documentId === id)).toBe(true);
     const ok = await app.inject({ method: 'POST', url: `/api/requests/${id}/approval`, headers: hod, payload: { action: 'approve' } });

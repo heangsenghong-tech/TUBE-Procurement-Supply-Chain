@@ -77,5 +77,9 @@ export const APPROVAL_STEP_STATUSES = {
 } as const;
 export type ApprovalStepStatus = keyof typeof APPROVAL_STEP_STATUSES;
 
-export const TRACKS = { store: 'Store', hq: 'HQ department' } as const;
+// The company's own terms: Track A — HQ departments, Track B — stores.
+export const TRACKS = { hq: 'Track A — HQ', store: 'Track B — Stores' } as const;
+
+// Who pays: company-owned stores (e.g. KDT) are paid by Tube Cafe Co., Ltd.; franchisee stores are billed.
+export const OWNERSHIP = { franchiser: 'Company-owned (Tube Cafe pays)', franchisee: 'Franchisee (billed to franchisee)' } as const;
 export type Track = keyof typeof TRACKS;

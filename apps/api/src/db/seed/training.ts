@@ -22,13 +22,14 @@ const PEOPLE = [
   { key: 'scm', name: 'Demo Supply Chain Manager', unit: 'SCP', roles: ['supply_chain_manager', 'export_authorized'] },
   { key: 'buyer', name: 'Demo Purchasing Officer', unit: 'SCP', roles: ['procurement_officer'] },
   { key: 'finhead', name: 'Demo Head of Finance', unit: 'FIN', roles: ['finance_head'] },
+  { key: 'acct.manager', name: 'Demo Accounting Manager (Head of Finance)', unit: 'FIN', roles: ['finance_head'] },
   { key: 'finance', name: 'Demo Finance Officer', unit: 'FIN', roles: ['finance'] },
   { key: 'warehouse', name: 'Demo Warehouse Officer', unit: 'SCP', roles: ['warehouse'] },
   { key: 'kdt.manager', name: 'Demo KDT Store Manager (HOD)', unit: 'KDT', roles: ['requester'], hodOf: 'KDT' },
   { key: 'kdt.staff', name: 'Demo KDT Barista', unit: 'KDT', roles: ['requester'] },
   { key: 'tk.manager', name: 'Demo Toul Kork Manager (HOD)', unit: 'TK', roles: ['requester'], hodOf: 'TK' },
   { key: 'tk.staff', name: 'Demo Toul Kork Barista', unit: 'TK', roles: ['requester'] },
-  { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester'], hodOf: 'OPS' },
+  { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester', 'head_of_operation'], hodOf: 'OPS' },
   { key: 'mkt.staff', name: 'Demo Marketing Executive', unit: 'MKT', roles: ['requester'] },
   { key: 'mkt.head', name: 'Demo Head of Marketing (HOD)', unit: 'MKT', roles: ['requester'], hodOf: 'MKT' }
 ];
@@ -60,9 +61,10 @@ export async function seedTraining(db: Db) {
   // Walks a request through whatever approval chain the engine assigned to it.
   const approveFully = async (requestId: string, hodKey: string) => {
     const viewer = await as('scm');
-    for (const key of [hodKey, 'finhead', 'ceo']) {
-      if ((await req.getRequest(db, viewer, requestId)).status !== 'pending_approval') break;
-      await req.actOnRequest(db, await as(key), requestId, { action: 'approve' });
+    for (let step = 0; step < 6 && (await req.getRequest(db, viewer, requestId)).status === 'pending_approval'; step++) {
+      for (const key of [hodKey, 'ops.head', 'finhead', 'ceo']) {
+        try { await req.actOnRequest(db, await as(key), requestId, { action: 'approve' }); break; } catch { /* not this person's step */ }
+      }
     }
   };
   const item = async (code: string) => (await db.query.items.findFirst({ where: eq(t.items.code, code) }))!.id;
@@ -79,7 +81,7 @@ export async function seedTraining(db: Db) {
     lines: [{ itemId: await item('I00043'), qty: 15 }, { itemId: await item('NEW-022'), qty: 1000 }] });
   await approveFully(pr2.id, 'tk.manager');
 
-  // 3) Waiting for the HOD.
+  // 3) A store request of $100+ waiting for the Head of Operation.
   await req.createPurchaseRequest(db, kdtStaff, { track: 'store', orgUnitId: unit('KDT').id, purpose: 'Cleaning supplies',
     lines: [{ itemId: await item('O000011'), qty: 6 }] });
 

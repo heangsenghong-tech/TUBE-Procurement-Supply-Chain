@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, dateTime } from '../lib/api';
 import { Card, ErrorText, Field, Loading, Modal, useCan } from '../lib/ui';
 import { CsvImport } from './CsvImport';
+import { OWNERSHIP, TRACKS } from '@tube/shared';
 import type { OrgUnit, Role, UserRow } from '../lib/types';
 
 export function PeoplePanel() {
@@ -104,12 +105,12 @@ function Units() {
       {units.isLoading ? <Loading /> : (
         <div className="table-wrap">
           <table className="report">
-            <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>HOD (approver)</th><th></th></tr></thead>
+            <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>HOD</th><th></th></tr></thead>
             <tbody>{(units.data ?? []).map((u) => (
               <tr key={u.id} style={u.active ? {} : { opacity: 0.5 }}>
                 <td>{u.code}</td><td>{u.name}</td>
-                <td>{u.type === 'store' ? `Store · ${u.ownership ?? ''}` : 'HQ department'}</td>
-                <td>{u.hodName ?? <span className="tag tag-warn">no HOD — SCM override</span>}</td>
+                <td>{u.type === 'store' ? TRACKS.store : TRACKS.hq}{u.type === 'store' && u.ownership && <div className="sub">{OWNERSHIP[u.ownership as keyof typeof OWNERSHIP]}</div>}</td>
+                <td>{u.hodName ?? <span className="tag tag-warn">no HOD yet</span>}</td>
                 <td><button className="btn-ghost" onClick={() => setEditing(u)}>Edit</button></td>
               </tr>
             ))}</tbody>
@@ -139,8 +140,8 @@ function UnitModal({ unit, canPickHod, onClose }: { unit: OrgUnit | null; canPic
       <div className="two-col">
         <Field label="Code"><input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} /></Field>
         <Field label="Name"><input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
-        <Field label="Type"><select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as 'store' | 'department' })}><option value="store">Store</option><option value="department">HQ department</option></select></Field>
-        {f.type === 'store' && <Field label="Ownership"><select value={f.ownership} onChange={(e) => setF({ ...f, ownership: e.target.value })}><option value="franchiser">Franchiser (company)</option><option value="franchisee">Franchisee</option></select></Field>}
+        <Field label="Type"><select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as 'store' | 'department' })}><option value="store">{TRACKS.store} — store</option><option value="department">{TRACKS.hq} — department</option></select></Field>
+        {f.type === 'store' && <Field label="Ownership"><select value={f.ownership} onChange={(e) => setF({ ...f, ownership: e.target.value })}><option value="franchiser">{OWNERSHIP.franchiser}</option><option value="franchisee">{OWNERSHIP.franchisee}</option></select></Field>}
       </div>
       {canPickHod && (
         <Field label="Head of Department (approves this unit's requests)">

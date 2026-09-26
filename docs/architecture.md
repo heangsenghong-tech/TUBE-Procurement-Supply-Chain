@@ -100,16 +100,23 @@ either the requesting unit's **HOD** (resolved live from `org_units.hod_user_id`
 has no eligible approver (no HOD set, or the HOD raised it), a holder of `approval.override`
 (Supply Chain Manager) may act — recorded as an override. Reject / Request changes require a reason.
 
-Seeded with the company's real matrix:
+Seeded with the company's confirmed structure — one pattern for both tracks. "HOD" is whoever heads
+the requesting unit:
 
-| Value | PR | PO |
-|---|---|---|
-| < $100 | Petty cash: HOD acknowledges → Finance register | No approval |
-| $100–$299 | HOD → Head of Finance | Supply Chain Manager → Head of Finance |
-| $300+ | HOD → Head of Finance → CEO | Head of Finance → CEO |
+| Value | Track A — HQ departments | Track B — Stores | PO |
+|---|---|---|---|
+| < $100 | Petty cash: the department's HOD acknowledges → Finance register | Petty cash: the store's own Store/Area Manager (its HOD) acknowledges → Finance register | No approval |
+| $100–$299 | Department HOD reviews → Head of Finance approves | Head of Operation reviews → Head of Finance approves | Supply Chain Manager → Head of Finance |
+| $300+ | Department HOD reviews → Head of Finance reviews → CEO approves | Head of Operation reviews → Head of Finance reviews → CEO approves | Head of Finance → CEO |
+
+"Head of Finance" and "Head of Operation" are roles, so anyone holding the role can act on that step
+(e.g. both the Head of Finance and the Accounting Manager). Store ownership doesn't change routing:
+KDT follows the Track B process but is tagged **company-owned** (Tube Cafe Co., Ltd. pays), while
+other stores are franchisee-billed. The named approvers are in `data/org/approvers.csv`, ready for
+**Users & Stores → Bulk add people**.
 
 ### Roles (configurable)
-Super Admin · CEO · Supply Chain Manager · Procurement Officer · Head of Finance · Finance ·
+Super Admin · CEO · Supply Chain Manager · Head of Operation · Procurement Officer · Head of Finance · Finance ·
 Warehouse · Store/Department User · Export Authorization. Each is a bundle of permission keys
 (`packages/shared/src/permissions.ts`), editable per role in the database.
 

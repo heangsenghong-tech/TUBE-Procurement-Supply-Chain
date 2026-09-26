@@ -493,7 +493,7 @@ export async function getRequest(db: DbOrTx, actor: Actor, id: string) {
     isUrgent: r.isUrgent, urgentReason: r.urgentReason,
     subject: r.kind === 'service' ? String((r.details as { subject?: string }).subject ?? '') : null,
     assignee: assignee ? { id: assignee.id, name: assignee.name } : null, resolution: r.resolution,
-    orgUnit: { id: unit!.id, name: unit!.name, type: unit!.type },
+    orgUnit: { id: unit!.id, name: unit!.name, type: unit!.type, ownership: unit!.ownership },
     requester: { id: requester!.id, name: requester!.name },
     estimatedTotal: showValue ? r.estimatedTotal : null,
     requiredDate: r.requiredDate, purpose: r.purpose, referenceUrl: r.referenceUrl, details: r.details,
