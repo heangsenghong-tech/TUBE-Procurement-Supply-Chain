@@ -24,8 +24,9 @@ export function canViewRequest(actor: Actor, r: Pick<Request, 'requesterId' | 'o
 
 // Requesters never see prices. HODs see the estimated value of their unit's requests because
 // they approve them; pricing roles see everything.
-export function canSeeRequestValue(actor: Actor, r: Pick<Request, 'orgUnitId'>) {
-  return can(actor, 'pricing.view') || actor.hodUnitIds.includes(r.orgUnitId);
+export function canSeeRequestValue(actor: Actor, r: Pick<Request, 'orgUnitId' | 'kind' | 'requesterId'>) {
+  // A service request's value is the requester's own estimate, so they see it too.
+  return can(actor, 'pricing.view') || actor.hodUnitIds.includes(r.orgUnitId) || (r.kind === 'service' && r.requesterId === actor.id);
 }
 
 function visibilityFilter(actor: Actor): SQL | undefined {
@@ -190,27 +191,28 @@ export async function resubmitPurchaseRequest(db: Db, actor: Actor, requestId: s
 }
 
 // ---------------- service requests ----------------
-// A task for Procurement that isn't buying catalog items. The HOD acknowledges it (per the
-// approval rules), then it waits in Procurement's service queue until someone takes and resolves it.
+// A task for Procurement that isn't buying catalog items. Its estimated cost routes it through the
+// same value tiers as a purchase (never petty cash), then it waits in Procurement's service queue until someone takes and resolves it.
 export async function createServiceRequest(db: Db, actor: Actor, input: ServiceRequestInput) {
   requirePermission(actor, 'request.create');
   const unit = await unitForRequest(db, actor, input.orgUnitId, input.track);
   const type = await resolveType(db, input.requestTypeId, 'service');
   const urgent = !!input.isUrgent;
-  const { rule, steps } = await pickRule(db, 'request', 0, { handling: 'service', requestTypeKey: type.key, track: input.track, orgUnitId: unit.id, urgent });
+  const cost = input.estimatedCost;
+  const { rule, steps } = await pickRule(db, 'request', cost, { handling: 'service', requestTypeKey: type.key, track: input.track, orgUnitId: unit.id, urgent });
 
   return db.transaction(async (tx) => {
     const number = await nextNumber(tx, 'SV');
     const [req] = await tx.insert(t.requests).values({
       number, kind: 'service', requestTypeId: type.id, track: input.track, orgUnitId: unit.id, requesterId: actor.id,
-      status: 'pending_approval', isUrgent: urgent, urgentReason: urgent ? input.urgentReason! : null,
+      status: 'pending_approval', estimatedTotal: cost, isUrgent: urgent, urgentReason: urgent ? input.urgentReason! : null,
       requiredDate: input.requiredDate ?? null, purpose: input.description, referenceUrl: input.referenceUrl ?? null,
       details: { subject: input.subject }
     }).returning();
-    const { autoApproved } = await startApproval(tx, { kind: 'request', documentId: req!.id, amount: 0, orgUnitId: unit.id, rule, steps });
+    const { autoApproved } = await startApproval(tx, { kind: 'request', documentId: req!.id, amount: cost, orgUnitId: unit.id, rule, steps });
     if (autoApproved) await onRequestApproved(tx, req!);
     await audit(tx, { userId: actor.id, action: 'service.create', entityType: 'request', entityId: req!.id,
-      after: { number, type: type.key, subject: input.subject, rule: rule.name, urgent } });
+      after: { number, type: type.key, subject: input.subject, cost, rule: rule.name, urgent } });
     return { id: req!.id, number };
   });
 }
@@ -222,16 +224,18 @@ export async function resubmitServiceRequest(db: Db, actor: Actor, requestId: st
   return db.transaction(async (tx) => {
     const req = await loadRequestForUpdate(tx, requestId);
     if (req.status !== 'changes_requested') throw conflict('This request is not waiting for changes.');
-    const { rule, steps } = await pickRule(tx, 'request', 0, { handling: 'service', requestTypeKey: type.key, track: req.track, orgUnitId: req.orgUnitId, urgent });
+    const cost = input.estimatedCost;
+    const { rule, steps } = await pickRule(tx, 'request', cost, { handling: 'service', requestTypeKey: type.key, track: req.track, orgUnitId: req.orgUnitId, urgent });
     await tx.update(t.requests).set({
-      status: 'pending_approval', requestTypeId: type.id, isUrgent: urgent, urgentReason: urgent ? input.urgentReason! : null,
+      status: 'pending_approval', requestTypeId: type.id, estimatedTotal: cost, isUrgent: urgent, urgentReason: urgent ? input.urgentReason! : null,
       requiredDate: input.requiredDate ?? null, purpose: input.description, referenceUrl: input.referenceUrl ?? null,
       details: { subject: input.subject }, updatedAt: new Date()
     }).where(eq(t.requests.id, req.id));
-    const { autoApproved } = await startApproval(tx, { kind: 'request', documentId: req.id, amount: 0, orgUnitId: req.orgUnitId, rule, steps });
+    const { autoApproved } = await startApproval(tx, { kind: 'request', documentId: req.id, amount: cost, orgUnitId: req.orgUnitId, rule, steps });
     if (autoApproved) await onRequestApproved(tx, req);
     await audit(tx, { userId: actor.id, action: 'service.resubmit', entityType: 'request', entityId: req.id,
-      before: { subject: (req.details as { subject?: string }).subject, description: req.purpose }, after: { subject: input.subject, description: input.description } });
+      before: { subject: (req.details as { subject?: string }).subject, description: req.purpose, cost: req.estimatedTotal },
+      after: { subject: input.subject, description: input.description, cost, rule: rule.name } });
     return { id: req.id, number: req.number };
   });
 }
@@ -278,7 +282,7 @@ export async function serviceQueue(db: DbOrTx, actor: Actor) {
   return rows.map(({ r, typeName, unitName, requesterName, assigneeName }) => ({
     id: r.id, number: r.number, status: r.status, typeName, subject: String((r.details as { subject?: string }).subject ?? ''),
     orgUnitName: unitName, requesterName, assigneeId: r.assigneeId, assigneeName, isUrgent: r.isUrgent, urgentReason: r.urgentReason,
-    requiredDate: r.requiredDate, submittedAt: r.submittedAt
+    requiredDate: r.requiredDate, submittedAt: r.submittedAt, estimatedCost: r.estimatedTotal
   }));
 }
 
@@ -493,7 +497,7 @@ export async function getRequest(db: DbOrTx, actor: Actor, id: string) {
     isUrgent: r.isUrgent, urgentReason: r.urgentReason,
     subject: r.kind === 'service' ? String((r.details as { subject?: string }).subject ?? '') : null,
     assignee: assignee ? { id: assignee.id, name: assignee.name } : null, resolution: r.resolution,
-    orgUnit: { id: unit!.id, name: unit!.name, type: unit!.type },
+    orgUnit: { id: unit!.id, name: unit!.name, type: unit!.type, ownership: unit!.ownership },
     requester: { id: requester!.id, name: requester!.name },
     estimatedTotal: showValue ? r.estimatedTotal : null,
     requiredDate: r.requiredDate, purpose: r.purpose, referenceUrl: r.referenceUrl, details: r.details,
@@ -542,7 +546,7 @@ export async function approvalInbox(db: DbOrTx, actor: Actor) {
       const type = await db.query.requestTypes.findFirst({ where: eq(t.requestTypes.id, r.requestTypeId) });
       const subject = r.kind === 'service' ? ` · ${String((r.details as { subject?: string }).subject ?? '')}` : '';
       out.push({ kind: 'request', documentId: r.id, number: r.number, title: `${unit?.name ?? ''}${r.isPettyCash ? ' · Petty cash' : ''}${subject}`,
-        typeName: type?.name ?? '', amount: r.kind === 'service' ? null : r.estimatedTotal, stepLabel: step.actionLabel,
+        typeName: type?.name ?? '', amount: r.estimatedTotal, stepLabel: step.actionLabel,
         override: how === 'override', urgent: r.isUrgent, submittedAt: r.submittedAt, by: requester?.name ?? '' });
     } else {
       const po = await db.query.purchaseOrders.findFirst({ where: eq(t.purchaseOrders.id, instance.documentId) });

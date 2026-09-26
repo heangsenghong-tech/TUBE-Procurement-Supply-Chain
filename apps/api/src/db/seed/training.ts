@@ -22,13 +22,14 @@ const PEOPLE = [
   { key: 'scm', name: 'Demo Supply Chain Manager', unit: 'SCP', roles: ['supply_chain_manager', 'export_authorized'] },
   { key: 'buyer', name: 'Demo Purchasing Officer', unit: 'SCP', roles: ['procurement_officer'] },
   { key: 'finhead', name: 'Demo Head of Finance', unit: 'FIN', roles: ['finance_head'] },
+  { key: 'acct.manager', name: 'Demo Accounting Manager (Head of Finance)', unit: 'FIN', roles: ['finance_head'] },
   { key: 'finance', name: 'Demo Finance Officer', unit: 'FIN', roles: ['finance'] },
   { key: 'warehouse', name: 'Demo Warehouse Officer', unit: 'SCP', roles: ['warehouse'] },
   { key: 'kdt.manager', name: 'Demo KDT Store Manager (HOD)', unit: 'KDT', roles: ['requester'], hodOf: 'KDT' },
   { key: 'kdt.staff', name: 'Demo KDT Barista', unit: 'KDT', roles: ['requester'] },
   { key: 'tk.manager', name: 'Demo Toul Kork Manager (HOD)', unit: 'TK', roles: ['requester'], hodOf: 'TK' },
   { key: 'tk.staff', name: 'Demo Toul Kork Barista', unit: 'TK', roles: ['requester'] },
-  { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester'], hodOf: 'OPS' },
+  { key: 'ops.head', name: 'Demo Head of Operation (HOD)', unit: 'OPS', roles: ['requester', 'head_of_operation'], hodOf: 'OPS' },
   { key: 'mkt.staff', name: 'Demo Marketing Executive', unit: 'MKT', roles: ['requester'] },
   { key: 'mkt.head', name: 'Demo Head of Marketing (HOD)', unit: 'MKT', roles: ['requester'], hodOf: 'MKT' }
 ];
@@ -60,9 +61,10 @@ export async function seedTraining(db: Db) {
   // Walks a request through whatever approval chain the engine assigned to it.
   const approveFully = async (requestId: string, hodKey: string) => {
     const viewer = await as('scm');
-    for (const key of [hodKey, 'finhead', 'ceo']) {
-      if ((await req.getRequest(db, viewer, requestId)).status !== 'pending_approval') break;
-      await req.actOnRequest(db, await as(key), requestId, { action: 'approve' });
+    for (let step = 0; step < 6 && (await req.getRequest(db, viewer, requestId)).status === 'pending_approval'; step++) {
+      for (const key of [hodKey, 'ops.head', 'finhead', 'ceo']) {
+        try { await req.actOnRequest(db, await as(key), requestId, { action: 'approve' }); break; } catch { /* not this person's step */ }
+      }
     }
   };
   const item = async (code: string) => (await db.query.items.findFirst({ where: eq(t.items.code, code) }))!.id;
@@ -79,7 +81,7 @@ export async function seedTraining(db: Db) {
     lines: [{ itemId: await item('I00043'), qty: 15 }, { itemId: await item('NEW-022'), qty: 1000 }] });
   await approveFully(pr2.id, 'tk.manager');
 
-  // 3) Waiting for the HOD.
+  // 3) A store request of $100+ waiting for the Head of Operation.
   await req.createPurchaseRequest(db, kdtStaff, { track: 'store', orgUnitId: unit('KDT').id, purpose: 'Cleaning supplies',
     lines: [{ itemId: await item('O000011'), qty: 6 }] });
 
@@ -133,10 +135,10 @@ export async function seedTraining(db: Db) {
   const typeOf = async (key: string) => (await db.query.requestTypes.findFirst({ where: eq(t.requestTypes.key, key) }))!.id;
   const sv1 = await req.createServiceRequest(db, kdtStaff, { track: 'store', orgUnitId: unit('KDT').id, requestTypeId: await typeOf('maintenance'),
     subject: 'Air-con leaking above the bar', description: 'Water drips onto the counter near the espresso machine every afternoon.',
-    isUrgent: true, urgentReason: 'Water near electrical equipment' });
-  await req.actOnRequest(db, await as('kdt.manager'), sv1.id, { action: 'approve' });
+    estimatedCost: 180, isUrgent: true, urgentReason: 'Water near electrical equipment' });
+  await approveFully(sv1.id, 'kdt.manager'); // $180: Head of Operation → Head of Finance, like a purchase
   const sv2 = await req.createServiceRequest(db, await as('ops.head'), { track: 'hq', orgUnitId: unit('OPS').id, requestTypeId: await typeOf('supplier_request'),
-    subject: 'Second supplier for fresh milk', description: 'We rely on one milk supplier. Please find a backup that can deliver to all stores by 7am.' });
+    subject: 'Second supplier for fresh milk', description: 'We rely on one milk supplier. Please find a backup that can deliver to all stores by 7am.', estimatedCost: 0 });
   // Operation's HOD raised it, so the Supply Chain Manager acknowledges it as a recorded override.
   await req.actOnRequest(db, await as('scm'), sv2.id, { action: 'approve' });
   await req.assignServiceRequest(db, buyer, sv2.id);

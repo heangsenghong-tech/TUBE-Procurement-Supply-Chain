@@ -40,7 +40,7 @@ export interface RequestDetail {
   requestType: { id: string; key: string; name: string };
   isUrgent: boolean; urgentReason: string | null; subject: string | null;
   assignee: { id: string; name: string } | null; resolution: string | null;
-  orgUnit: { id: string; name: string; type: string }; requester: { id: string; name: string };
+  orgUnit: { id: string; name: string; type: string; ownership: 'franchiser' | 'franchisee' | null }; requester: { id: string; name: string };
   estimatedTotal: number | null; requiredDate: string | null; purpose: string | null; referenceUrl: string | null;
   details: Record<string, string | number | undefined>;
   submittedAt: string; completedAt: string | null; cancelledAt: string | null; cancelReason: string | null;
@@ -62,7 +62,7 @@ export interface InboxEntry {
 
 export interface ServiceQueueEntry {
   id: string; number: string; status: string; typeName: string; subject: string; orgUnitName: string; requesterName: string;
-  assigneeId: string | null; assigneeName: string | null; isUrgent: boolean; urgentReason: string | null; requiredDate: string | null; submittedAt: string;
+  assigneeId: string | null; assigneeName: string | null; isUrgent: boolean; urgentReason: string | null; requiredDate: string | null; submittedAt: string; estimatedCost: number;
 }
 
 export interface ReviewGroup {

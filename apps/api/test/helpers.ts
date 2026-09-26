@@ -33,7 +33,8 @@ export interface World {
   as: (key: string) => Promise<Actor>;
 }
 
-// A small company: two stores with HODs, Marketing, and one person per approver role.
+// A small company: two stores with HODs (Track B), HR with a HOD and Marketing without one
+// (Track A), the Head of Operation, and one person per approver role.
 export async function buildWorld(db: Db): Promise<World> {
   const adminUser = (await db.query.users.findFirst({ where: eq(t.users.email, 'admin@tubecafecambodia.com') }))!;
   const admin = (await loadActor(db, adminUser.id))!;
@@ -43,7 +44,8 @@ export async function buildWorld(db: Db): Promise<World> {
 
   const spec: [string, string, string[]][] = [
     ['kdt.hod', 'KDT', ['requester']], ['kdt.staff', 'KDT', ['requester']], ['tk.hod', 'TK', ['requester']], ['tk.staff', 'TK', ['requester']],
-    ['mkt.staff', 'MKT', ['requester']], ['finhead', 'FIN', ['finance_head']], ['finance', 'FIN', ['finance']], ['ceo', 'MGT', ['ceo']],
+    ['mkt.staff', 'MKT', ['requester']], ['hr.hod', 'HR', ['requester']], ['hr.staff', 'HR', ['requester']],
+    ['ops.head', 'OPS', ['requester', 'head_of_operation']], ['finhead', 'FIN', ['finance_head']], ['finance', 'FIN', ['finance']], ['ceo', 'MGT', ['ceo']],
     ['scm', 'SCP', ['supply_chain_manager']], ['buyer', 'SCP', ['procurement_officer']], ['buyer.export', 'SCP', ['procurement_officer', 'export_authorized']]
   ];
   const ids: Record<string, string> = {};
@@ -52,6 +54,7 @@ export async function buildWorld(db: Db): Promise<World> {
   }
   await master.upsertOrgUnit(db, admin, units.KDT!, { code: 'KDT', name: 'KDT', type: 'store', ownership: 'franchiser', hodUserId: ids['kdt.hod'] });
   await master.upsertOrgUnit(db, admin, units.TK!, { code: 'TK', name: 'Toul Kork', type: 'store', ownership: 'franchisee', hodUserId: ids['tk.hod'] });
+  await master.upsertOrgUnit(db, admin, units.HR!, { code: 'HR', name: 'HR', type: 'department', hodUserId: ids['hr.hod'] });
 
   const as = async (key: string) => (await loadActor(db, ids[key]!))!;
   const people: Record<string, Actor> = {};

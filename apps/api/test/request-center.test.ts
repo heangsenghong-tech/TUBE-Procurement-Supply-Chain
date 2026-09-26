@@ -67,7 +67,7 @@ describe('approval routing by conditions', () => {
     const plain = await req.createPurchaseRequest(w.db, w.people['mkt.staff']!, { track: 'hq', orgUnitId: w.units.MKT!, lines: laptop });
     expect((await chainOf(it.id)).ruleName).toBe('IT $300+');
     expect((await chainOf(it.id)).steps.map((s) => s.actionLabel)).toContain('Spec checked');
-    expect((await chainOf(plain.id)).ruleName).toBe('$300 and above');
+    expect((await chainOf(plain.id)).ruleName).toBe('Track A — HQ: $300 and above');
   });
 
   it('store-specific and category rules apply only when every condition matches', async () => {
@@ -82,9 +82,9 @@ describe('approval routing by conditions', () => {
     expect((await chainOf(food.id)).ruleName).toBe('KDT food up to $300');
     const mixed = await req.createPurchaseRequest(w.db, kdt, { track: 'store', orgUnitId: w.units.KDT!,
       lines: [{ itemId: await w.item('I00043'), qty: 10 }, { itemId: await w.item('GEN-023'), qty: 2 }] });
-    expect((await chainOf(mixed.id)).ruleName).toBe('$100 – $299');
+    expect((await chainOf(mixed.id)).ruleName).toBe('Track B — Stores: $100 – $299');
     const tk = await req.createPurchaseRequest(w.db, w.people['tk.staff']!, { track: 'store', orgUnitId: w.units.TK!, lines: [{ itemId: await w.item('I00043'), qty: 10 }] });
-    expect((await chainOf(tk.id)).ruleName).toBe('$100 – $299');
+    expect((await chainOf(tk.id)).ruleName).toBe('Track B — Stores: $100 – $299');
   });
 
   it('two rules with the same conditions and overlapping amounts are refused; editing one can\'t create the clash either', async () => {
@@ -95,8 +95,8 @@ describe('approval routing by conditions', () => {
     const rules = await master.listApprovalRules(w.db);
     const it = rules.find((r) => r.name === 'IT $300+')!;
     await expect(master.updateApprovalRule(w.db, w.admin, it.id, {
-      name: it.name, minAmount: 300, maxAmount: null, isPettyCash: false, active: true, conditions: {}, steps: steps.hodFinance
-    })).rejects.toThrow(/overlaps "\$300 and above"/);
+      name: it.name, minAmount: 300, maxAmount: null, isPettyCash: false, active: true, conditions: { track: 'hq' }, steps: steps.hodFinance
+    })).rejects.toThrow(/overlaps "Track A — HQ: \$300 and above"/);
   });
 
   it('PO rules can use item categories, Direct/Indirect and urgency — not request-only conditions', async () => {
@@ -110,7 +110,7 @@ describe('approval routing by conditions', () => {
       steps: [{ approverType: 'role', roleKey: 'supply_chain_manager', actionLabel: 'Reviewed' }, { approverType: 'role', roleKey: 'ceo', actionLabel: 'Approved' }]
     });
     const pr = await req.createPurchaseRequest(w.db, w.people['kdt.staff']!, { track: 'store', orgUnitId: w.units.KDT!, lines: [{ itemId: await w.item('GEN-012'), qty: 3 }] });
-    for (const who of ['kdt.hod', 'finhead']) await req.actOnRequest(w.db, w.people[who]!, pr.id, approve);
+    for (const who of ['ops.head', 'finhead']) await req.actOnRequest(w.db, w.people[who]!, pr.id, approve);
     const g = (await proc.reviewQueue(w.db, w.people.buyer!)).find((x) => x.itemCode === 'GEN-012')!;
     const po = await proc.createDirectPo(w.db, w.people.buyer!, { supplierId: await w.supplier('SUP-0001'),
       lines: [{ itemId: g.itemId, qty: 3, unitPrice: 65, requestLineIds: g.contributors.map((c) => c.lineId) }] });
@@ -138,7 +138,7 @@ describe('urgent requests', () => {
     const urgent = await req.createPurchaseRequest(w.db, tk, { track: 'store', orgUnitId: w.units.TK!, isUrgent: true, urgentReason: 'Machine down, store can\'t serve',
       lines: [{ itemId: await w.item('I00047'), qty: 15 }] });
     expect(urgent.isUrgent).toBe(true);
-    const inbox = await req.approvalInbox(w.db, w.people['tk.hod']!);
+    const inbox = await req.approvalInbox(w.db, w.people['ops.head']!);
     const pos = (id: string) => inbox.findIndex((e) => e.documentId === id);
     expect(pos(urgent.id)).toBeLessThan(pos(normal.id));
 
@@ -146,7 +146,7 @@ describe('urgent requests', () => {
     expect(petty.isPettyCash).toBe(true);
     expect(petty.isUrgent).toBe(false);
 
-    for (const who of ['tk.hod', 'finhead']) await req.actOnRequest(w.db, w.people[who]!, urgent.id, approve);
+    for (const who of ['ops.head', 'finhead']) await req.actOnRequest(w.db, w.people[who]!, urgent.id, approve);
     const queue = await proc.reviewQueue(w.db, w.people.buyer!);
     expect(queue[0]!.itemCode).toBe('I00047');
     expect(queue[0]!.urgent).toBe(true);
@@ -168,9 +168,9 @@ describe('urgent requests', () => {
 
 describe('service requests', () => {
   const input = async () => ({ track: 'store' as const, orgUnitId: w.units.KDT!, requestTypeId: await typeId('maintenance'),
-    subject: 'Air-con leaking', description: 'The unit above the bar drips onto the counter.' });
+    subject: 'Air-con leaking', description: 'The unit above the bar drips onto the counter.', estimatedCost: 40 });
 
-  it('HOD acknowledges, then Procurement takes and resolves it — it never touches sourcing', async () => {
+  it('below $100: the HOD acknowledges, then Procurement takes and resolves it — it never touches sourcing', async () => {
     const staff = w.people['kdt.staff']!;
     const sv = await req.createServiceRequest(w.db, staff, await input());
     expect(sv.number).toMatch(/^SV-\d{4}-\d{6}$/);
@@ -215,11 +215,32 @@ describe('service requests', () => {
       name: rule.name, minAmount: 0, maxAmount: null, isPettyCash: false, active: false, conditions: { handling: 'service' },
       steps: [{ approverType: 'hod', actionLabel: 'Acknowledged' }]
     });
+    expect(serviceRequestInput.safeParse({ ...(await input()), estimatedCost: undefined }).success).toBe(false);
     await expect(req.createServiceRequest(w.db, w.people['kdt.staff']!, await input())).rejects.toThrow(/No approval rule/);
     await master.updateApprovalRule(w.db, w.admin, rule.id, {
-      name: rule.name, minAmount: 0, maxAmount: null, isPettyCash: false, active: true, conditions: { handling: 'service' },
+      name: rule.name, minAmount: 0, maxAmount: 100, isPettyCash: false, active: true, conditions: { handling: 'service' },
       steps: [{ approverType: 'hod', actionLabel: 'Acknowledged' }]
     });
+  });
+
+  it('$100 and above: the same value tiers as a purchase, then Procurement\'s service queue', async () => {
+    const store = await req.createServiceRequest(w.db, w.people['kdt.staff']!, { ...(await input()), estimatedCost: 250 });
+    let chain = await chainOf(store.id);
+    expect(chain.ruleName).toBe('Track B — Stores: $100 – $299');
+    await expect(req.actOnRequest(w.db, w.people['kdt.hod']!, store.id, approve)).rejects.toThrow(/waiting for/);
+    for (const who of ['ops.head', 'finhead']) await req.actOnRequest(w.db, w.people[who]!, store.id, approve);
+    const d = await req.getRequest(w.db, w.people['kdt.staff']!, store.id);
+    expect(d.status).toBe('approved');
+    expect(d.isPettyCash).toBe(false);
+    expect(d.estimatedTotal).toBe(250); // the requester sees their own estimate
+    expect((await req.serviceQueue(w.db, w.people.buyer!)).find((x) => x.id === store.id)!.estimatedCost).toBe(250);
+
+    const hq = await req.createServiceRequest(w.db, w.people['hr.staff']!, { track: 'hq', orgUnitId: w.units.HR!,
+      requestTypeId: await typeId('contract_request'), subject: 'Cleaning contract', description: 'Yearly office cleaning', estimatedCost: 1200 });
+    chain = await chainOf(hq.id);
+    expect(chain.ruleName).toBe('Track A — HQ: $300 and above');
+    for (const who of ['hr.hod', 'finhead', 'ceo']) await req.actOnRequest(w.db, w.people[who]!, hq.id, approve);
+    expect((await req.getRequest(w.db, w.admin, hq.id)).status).toBe('approved');
   });
 
   it('validates rule input: a petty cash rule can\'t cover service requests', async () => {

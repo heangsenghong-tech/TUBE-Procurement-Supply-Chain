@@ -18,7 +18,7 @@ export function NewServiceRequestPage() {
   const types = useQuery({ queryKey: ['request-types'], queryFn: () => api.get<RequestType[]>('/api/request-types') });
   const units = useQuery({ queryKey: ['org-units'], queryFn: () => api.get<OrgUnit[]>('/api/org-units') });
   const existing = useQuery({ queryKey: ['request', editId], enabled: !!editId, queryFn: () => api.get<RequestDetail>(`/api/requests/${editId}`) });
-  const [f, setF] = useState({ orgUnitId: '', requestTypeId: params.get('type') ?? '', subject: '', description: '', requiredDate: '', referenceUrl: '' });
+  const [f, setF] = useState({ orgUnitId: '', requestTypeId: params.get('type') ?? '', subject: '', description: '', estimatedCost: '', requiredDate: '', referenceUrl: '' });
   const [urgent, setUrgent] = useState({ on: false, reason: '' });
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -29,7 +29,7 @@ export function NewServiceRequestPage() {
   useEffect(() => {
     const r = existing.data;
     if (!r) return;
-    setF({ orgUnitId: r.orgUnit.id, requestTypeId: r.requestType.id, subject: r.subject ?? '', description: r.purpose ?? '', requiredDate: r.requiredDate ?? '', referenceUrl: r.referenceUrl ?? '' });
+    setF({ orgUnitId: r.orgUnit.id, requestTypeId: r.requestType.id, subject: r.subject ?? '', description: r.purpose ?? '', estimatedCost: r.estimatedTotal != null ? String(r.estimatedTotal) : '', requiredDate: r.requiredDate ?? '', referenceUrl: r.referenceUrl ?? '' });
     setUrgent({ on: r.isUrgent, reason: r.urgentReason ?? '' });
   }, [existing.data]);
 
@@ -43,6 +43,7 @@ export function NewServiceRequestPage() {
     setError(null);
     const check = serviceRequestInput.safeParse({
       ...f, track: unit?.type === 'store' ? 'store' : 'hq', requiredDate: f.requiredDate || undefined,
+      estimatedCost: f.estimatedCost.trim() === '' ? undefined : Number(f.estimatedCost),
       isUrgent: urgent.on, urgentReason: urgent.on ? urgent.reason : undefined
     });
     if (!check.success) { setError(new Error(check.error.issues[0]?.message ?? 'Check the form.')); return; }
@@ -56,7 +57,7 @@ export function NewServiceRequestPage() {
 
   return (
     <Card title={editId ? `Resubmit ${existing.data?.number ?? ''}` : type?.name ?? 'Service request'}
-      note={type?.description || 'Tell Procurement what you need. Your HOD acknowledges it first, then someone in Procurement takes it on and reports back here.'}>
+      note={type?.description || 'Tell Procurement what you need. It\'s approved like a purchase of the same value, then someone in Procurement takes it on and reports back here.'}>
       <form onSubmit={submit}>
         <div className="two-col">
           <Field label="Request type">
@@ -72,6 +73,10 @@ export function NewServiceRequestPage() {
         </div>
         <Field label="Subject"><input value={f.subject} maxLength={200} onChange={set('subject')} placeholder="e.g. Air-con leaking above the bar" /></Field>
         <Field label="What do you need?"><textarea rows={5} value={f.description} maxLength={3000} onChange={set('description')} placeholder="Details that help Procurement act without coming back to you" /></Field>
+        <Field label="Estimated cost (USD) — 0 if there is none">
+          <input type="number" inputMode="decimal" min={0} step="0.01" value={f.estimatedCost} onChange={set('estimatedCost')} placeholder="e.g. 150" />
+          <div className="sub" style={{ marginTop: 4 }}>Sets who approves it: under $100 your HOD; $100 or more also the Head of Finance, and the CEO from $300.</div>
+        </Field>
         <div className="two-col">
           <Field label="Needed by (optional)"><input type="date" value={f.requiredDate} onChange={set('requiredDate')} /></Field>
           <Field label="Photo / document link (optional)"><input value={f.referenceUrl} onChange={set('referenceUrl')} placeholder="Google Drive/Photos link" /></Field>
