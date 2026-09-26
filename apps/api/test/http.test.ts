@@ -119,6 +119,30 @@ describe('authorization over HTTP', () => {
     expect(ok.statusCode).toBe(200);
   });
 
+  it('request types are readable by everyone; only administrators change types and approval rules', async () => {
+    const h = await signIn('kdt.staff');
+    const types = await app.inject({ method: 'GET', url: '/api/request-types', headers: h });
+    expect(types.statusCode).toBe(200);
+    expect(types.json().length).toBeGreaterThan(5);
+    const newType = { key: 'hack', name: 'Hack', group: 'other', handling: 'service' };
+    expect((await app.inject({ method: 'POST', url: '/api/request-types', headers: h, payload: newType })).statusCode).toBe(403);
+    const rule = { documentKind: 'request', name: 'Skip all approvals', minAmount: 0, maxAmount: null, isPettyCash: false, active: true,
+      conditions: { orgUnitIds: [w.units.KDT] }, steps: [] };
+    expect((await app.inject({ method: 'POST', url: '/api/approval-rules', headers: h, payload: rule })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'POST', url: '/api/approval-rules/preview', headers: h, payload: { documentKind: 'request', amount: 5 } })).statusCode).toBe(403);
+    expect((await app.inject({ method: 'GET', url: '/api/procurement/service-queue', headers: h })).statusCode).toBe(403);
+  });
+
+  it('a store user raises a service request; they can\'t take it themselves', async () => {
+    const h = await signIn('kdt.staff');
+    const maintenance = (await app.inject({ method: 'GET', url: '/api/request-types', headers: h })).json().find((x: { key: string }) => x.key === 'maintenance');
+    const res = await app.inject({ method: 'POST', url: '/api/requests/service', headers: h, payload: {
+      track: 'store', orgUnitId: w.units.KDT, requestTypeId: maintenance.id, subject: 'Grinder noisy', description: 'Makes a grinding noise',
+      isUrgent: true, urgentReason: 'Morning rush' } });
+    expect(res.statusCode).toBe(200);
+    expect((await app.inject({ method: 'POST', url: `/api/requests/${res.json().id}/assign`, headers: h, payload: {} })).statusCode).toBe(403);
+  });
+
   it('validation errors come back as 400 with a readable message', async () => {
     const h = await signIn('kdt.staff');
     const res = await app.inject({ method: 'POST', url: '/api/requests/purchase', headers: h, payload: { track: 'store', orgUnitId: w.units.KDT, lines: [] } });

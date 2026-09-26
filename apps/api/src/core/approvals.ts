@@ -1,6 +1,7 @@
 // Configurable approval engine.
 //
-// A rule is chosen by document kind and amount (plus optional conditions). Its steps are copied
+// A rule is chosen by document kind and amount, plus optional conditions (request type, handling,
+// store/HQ, store or department, item categories, Direct/Indirect, urgent). Its steps are copied
 // into an approval instance so later rule edits never change an approval already under way.
 // Steps run strictly in order, and each action is checked against who is signed in:
 //   - HOD steps: the current Head of Department of the request's store/department
@@ -9,6 +10,7 @@
 // or the HOD raised the request themselves), a holder of `approval.override` may act, and that
 // is recorded as an override.
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import type { ApprovalConditions } from '@tube/shared';
 import type { DbOrTx, Tx } from '../db/client';
 import * as t from '../db/schema';
 import type { Actor } from './actor';
@@ -17,18 +19,47 @@ import { badRequest, conflict, forbidden } from './errors';
 
 type DocumentKind = 'request' | 'po';
 
-export async function pickRule(db: DbOrTx, kind: DocumentKind, amount: number, context: Record<string, unknown> = {}) {
+// What a rule's conditions are checked against.
+export interface RoutingContext {
+  handling?: 'purchase' | 'sample' | 'service';
+  requestTypeKey?: string;
+  track?: 'store' | 'hq';
+  orgUnitId?: string;
+  categories?: string[];        // distinct item categories on the document
+  procurementTypes?: string[];  // distinct Direct/Indirect on the document
+  urgent?: boolean;
+}
+
+export function matchesConditions(conditions: ApprovalConditions, ctx: RoutingContext) {
+  const allIn = (have: string[] | undefined, allowed: string[]) => !!have?.length && have.every((h) => allowed.includes(h));
+  if (conditions.handling !== undefined && conditions.handling !== ctx.handling) return false;
+  if (conditions.requestTypeKeys && !conditions.requestTypeKeys.includes(ctx.requestTypeKey ?? '')) return false;
+  if (conditions.track !== undefined && conditions.track !== ctx.track) return false;
+  if (conditions.orgUnitIds && !conditions.orgUnitIds.includes(ctx.orgUnitId ?? '')) return false;
+  if (conditions.categories && !allIn(ctx.categories, conditions.categories)) return false;
+  if (conditions.procurementTypes && !allIn(ctx.procurementTypes, conditions.procurementTypes)) return false;
+  if (conditions.urgent !== undefined && conditions.urgent !== !!ctx.urgent) return false;
+  return true;
+}
+
+export const specificity = (c: ApprovalConditions) => Object.keys(c).length;
+
+// The most specific active rule whose amount range and conditions match (ties: lower priority
+// number first). Petty cash rules only ever apply to purchase requests.
+export async function pickRule(db: DbOrTx, kind: DocumentKind, amount: number, ctx: RoutingContext = {}) {
   const rules = await db.query.approvalRules.findMany({
     where: and(eq(t.approvalRules.documentKind, kind), eq(t.approvalRules.active, true)),
     orderBy: [asc(t.approvalRules.priority)]
   });
   const matches = rules.filter((r) =>
     amount >= r.minAmount && (r.maxAmount == null || amount < r.maxAmount) &&
-    Object.entries(r.conditions ?? {}).every(([k, v]) => context[k] === v));
-  // Rules with specific conditions win over general ones.
-  matches.sort((a, b) => Object.keys(b.conditions ?? {}).length - Object.keys(a.conditions ?? {}).length || a.priority - b.priority);
+    (!r.isPettyCash || (kind === 'request' && ctx.handling === 'purchase')) &&
+    matchesConditions(r.conditions as ApprovalConditions, ctx));
+  matches.sort((a, b) => specificity(b.conditions as ApprovalConditions) - specificity(a.conditions as ApprovalConditions) || a.priority - b.priority);
   const rule = matches[0];
-  if (!rule) throw badRequest(`No approval rule covers a ${kind === 'po' ? 'PO' : 'request'} of $${amount.toFixed(2)}. Ask an administrator to check the approval rules.`);
+  if (!rule) {
+    throw badRequest(`No approval rule covers this ${kind === 'po' ? 'PO' : 'request'} ($${amount.toFixed(2)}). Ask an administrator to check the approval rules.`);
+  }
   const steps = await db.query.approvalRuleSteps.findMany({ where: eq(t.approvalRuleSteps.ruleId, rule.id), orderBy: [asc(t.approvalRuleSteps.seq)] });
   return { rule, steps };
 }

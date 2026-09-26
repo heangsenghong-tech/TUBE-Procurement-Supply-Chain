@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { sampleRequestInput } from '@tube/shared';
 import { api } from '../lib/api';
 import { Card, ErrorText, Field, useCan, useMe } from '../lib/ui';
@@ -9,6 +9,7 @@ import type { OrgUnit } from '../lib/types';
 // The validated field list from the prototype's Sample Request.
 export function NewSampleRequestPage() {
   const { data: me } = useMe();
+  const [params] = useSearchParams();
   const can = useCan();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -24,7 +25,7 @@ export function NewSampleRequestPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const check = sampleRequestInput.safeParse({ ...f, track: unit?.type === 'store' ? 'store' : 'hq', quantity: Number(f.quantity) });
+    const check = sampleRequestInput.safeParse({ ...f, track: unit?.type === 'store' ? 'store' : 'hq', quantity: Number(f.quantity), requestTypeId: params.get('type') ?? undefined });
     if (!check.success) { setError(new Error(check.error.issues[0]?.message ?? 'Check the form.')); return; }
     setBusy(true);
     try {
@@ -59,7 +60,7 @@ export function NewSampleRequestPage() {
         </div>
         <div className="flex gap-2">
           <button className="btn-primary" disabled={busy}>{busy ? 'Submitting…' : 'Submit Sample Request'}</button>
-          <Link to="/" className="btn-ghost">Cancel</Link>
+          <Link to="/requests/new" className="btn-ghost">Cancel</Link>
         </div>
         <div style={{ marginTop: 10 }}><ErrorText error={error} /></div>
       </form>

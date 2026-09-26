@@ -3,7 +3,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import {
-  ALL_PERMISSIONS, PERMISSIONS, approvalActionInput, approvalRuleInput, cancelInput, commentInput, contractInput, createQcsInput,
+  ALL_PERMISSIONS, PERMISSIONS, approvalActionInput, approvalRuleInput, assignServiceInput, requestTypeInput, resolveServiceInput, serviceRequestInput, cancelInput, commentInput, contractInput, createQcsInput,
   deliverPoInput, directPoInput, generatePoFromQcsInput, itemInput, itemPriceInput, orgUnitInput, pettyCashReconcileInput,
   purchaseRequestInput, quotationInput, sampleEvaluationInput, sampleRequestInput, selectQuotationInput, supplierInput, userInput
 } from '@tube/shared';
@@ -40,16 +40,28 @@ export function apiRoutes(config: Config, db: Db) {
     // ---------------- requests ----------------
     app.get('/requests', async (r) => {
       const q = z.object({
-        scope: z.enum(['mine', 'unit', 'all']).optional(), kind: z.enum(['purchase', 'sample']).optional(),
+        scope: z.enum(['mine', 'unit', 'all']).optional(), kind: z.enum(['purchase', 'sample', 'service']).optional(),
+        urgent: z.enum(['true', 'false']).optional(),
         pettyCash: z.enum(['true', 'false']).optional(), status: z.string().optional(), q: z.string().max(100).optional(),
         limit: z.coerce.number().int().min(1).max(200).optional(), offset: z.coerce.number().int().min(0).optional()
       }).parse(r.query);
-      return req.listRequests(db, actorOf(r), { ...q, pettyCash: q.pettyCash === undefined ? undefined : q.pettyCash === 'true', status: q.status?.split(',') });
+      return req.listRequests(db, actorOf(r), {
+        ...q, pettyCash: q.pettyCash === undefined ? undefined : q.pettyCash === 'true',
+        urgent: q.urgent === undefined ? undefined : q.urgent === 'true', status: q.status?.split(',')
+      });
     });
     app.get('/requests/:id', async (r) => req.getRequest(db, actorOf(r), id(r)));
     app.post('/requests/purchase', async (r) => req.createPurchaseRequest(db, actorOf(r), purchaseRequestInput.parse(r.body)));
     app.put('/requests/:id/purchase', async (r) => req.resubmitPurchaseRequest(db, actorOf(r), id(r), purchaseRequestInput.parse(r.body)));
     app.post('/requests/sample', async (r) => req.createSampleRequest(db, actorOf(r), sampleRequestInput.parse(r.body)));
+    app.post('/requests/service', async (r) => req.createServiceRequest(db, actorOf(r), serviceRequestInput.parse(r.body)));
+    app.put('/requests/:id/service', async (r) => req.resubmitServiceRequest(db, actorOf(r), id(r), serviceRequestInput.parse(r.body)));
+    app.post('/requests/:id/assign', async (r) => { await req.assignServiceRequest(db, actorOf(r), id(r), assignServiceInput.parse(r.body ?? {}).assigneeId); return { ok: true }; });
+    app.post('/requests/:id/resolve', async (r) => { await req.resolveServiceRequest(db, actorOf(r), id(r), resolveServiceInput.parse(r.body).resolution); return { ok: true }; });
+    app.get('/procurement/service-queue', async (r) => req.serviceQueue(db, actorOf(r)));
+    app.get('/request-types', async (r) => master.listRequestTypes(db, actorOf(r), z.object({ all: z.enum(['true', 'false']).optional() }).parse(r.query).all === 'true'));
+    app.post('/request-types', async (r) => master.upsertRequestType(db, actorOf(r), null, requestTypeInput.parse(r.body)));
+    app.put('/request-types/:id', async (r) => master.upsertRequestType(db, actorOf(r), id(r), requestTypeInput.parse(r.body)));
     app.post('/requests/:id/approval', async (r) => req.actOnRequest(db, actorOf(r), id(r), approvalActionInput.parse(r.body)));
     app.post('/requests/:id/cancel', async (r) => { await req.cancelRequest(db, actorOf(r), id(r), cancelInput.parse(r.body).reason); return { ok: true }; });
     app.post('/requests/:id/evaluation', async (r) => {
@@ -100,7 +112,14 @@ export function apiRoutes(config: Config, db: Db) {
       return { ok: true };
     });
     app.get('/approval-rules', async (r) => { requirePermission(actorOf(r), 'settings.manage'); return master.listApprovalRules(db); });
+    app.post('/approval-rules', async (r) => master.createApprovalRule(db, actorOf(r), approvalRuleInput.parse(r.body)));
     app.put('/approval-rules/:id', async (r) => { await master.updateApprovalRule(db, actorOf(r), id(r), approvalRuleInput.parse(r.body)); return { ok: true }; });
+    app.post('/approval-rules/preview', async (r) => master.previewRouting(db, actorOf(r), z.object({
+      documentKind: z.enum(['request', 'po']), amount: z.number().min(0).max(100_000_000),
+      handling: z.enum(['purchase', 'service']).optional(), requestTypeKey: z.string().max(40).optional(),
+      orgUnitId: z.string().uuid().optional(), categories: z.array(z.enum(['Food', 'Non-food'])).optional(),
+      procurementTypes: z.array(z.enum(['Direct', 'Indirect'])).optional(), urgent: z.boolean().optional()
+    }).parse(r.body)));
 
     // ---------------- procurement ----------------
     app.get('/procurement/review', async (r) => proc.reviewQueue(db, actorOf(r)));

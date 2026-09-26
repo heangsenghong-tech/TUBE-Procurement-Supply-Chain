@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { purchaseRequestInput } from '@tube/shared';
 import { api, money } from '../lib/api';
-import { Card, ErrorText, Field, useCan, useMe } from '../lib/ui';
-import type { Item, OrgUnit, RequestDetail } from '../lib/types';
+import { Card, ErrorText, Field, UrgentField, useCan, useMe } from '../lib/ui';
+import type { Item, OrgUnit, RequestDetail, RequestType } from '../lib/types';
 
 interface Line { key: number; itemId: string; search: string; qty: string }
 let nextKey = 1;
@@ -12,12 +12,14 @@ let nextKey = 1;
 // Raise a PR — or, at /requests/:id/edit, resubmit one that was sent back for changes.
 export function NewPurchaseRequestPage() {
   const { id: editId } = useParams();
+  const [params] = useSearchParams();
   const { data: me } = useMe();
   const can = useCan();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const items = useQuery({ queryKey: ['items'], queryFn: () => api.get<Item[]>('/api/items') });
   const units = useQuery({ queryKey: ['org-units'], queryFn: () => api.get<OrgUnit[]>('/api/org-units') });
+  const types = useQuery({ queryKey: ['request-types'], queryFn: () => api.get<RequestType[]>('/api/request-types') });
   const existing = useQuery({ queryKey: ['request', editId], enabled: !!editId, queryFn: () => api.get<RequestDetail>(`/api/requests/${editId}`) });
 
   const [unitId, setUnitId] = useState('');
@@ -25,6 +27,8 @@ export function NewPurchaseRequestPage() {
   const [purpose, setPurpose] = useState('');
   const [requiredDate, setRequiredDate] = useState('');
   const [referenceUrl, setReferenceUrl] = useState('');
+  const [requestTypeId, setRequestTypeId] = useState(params.get('type') ?? '');
+  const [urgent, setUrgent] = useState({ on: false, reason: '' });
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
@@ -34,10 +38,13 @@ export function NewPurchaseRequestPage() {
     if (!r) return;
     setUnitId(r.orgUnit.id);
     setPurpose(r.purpose ?? ''); setRequiredDate(r.requiredDate ?? ''); setReferenceUrl(r.referenceUrl ?? '');
+    setRequestTypeId(r.requestType.id); setUrgent({ on: r.isUrgent, reason: r.urgentReason ?? '' });
     setLines(r.lines.filter((l) => l.status === 'pending_approval').map((l) => ({ key: nextKey++, itemId: l.itemId, search: `${l.itemCode} — ${l.itemDescription}`, qty: String(l.qty) })));
   }, [existing.data]);
 
   const unit = units.data?.find((u) => u.id === unitId);
+  const purchaseTypes = (types.data ?? []).filter((t) => t.handling === 'purchase');
+  const type = purchaseTypes.find((t) => t.id === requestTypeId) ?? purchaseTypes.find((t) => t.key === 'purchase_request');
   const unitChoices = (units.data ?? []).filter((u) => u.active && (can('request.view_all') || u.id === me?.orgUnit?.id));
   const byLabel = useMemo(() => new Map((items.data ?? []).map((i) => [`${i.code} — ${i.description}`, i])), [items.data]);
 
@@ -50,6 +57,7 @@ export function NewPurchaseRequestPage() {
     const resolved = lines.map((l) => ({ ...l, itemId: l.itemId || byLabel.get(l.search.trim())?.id || '' }));
     const payload = {
       track: unit?.type === 'store' ? 'store' : 'hq', orgUnitId: unitId, purpose, referenceUrl, requiredDate: requiredDate || undefined,
+      requestTypeId: type?.id, isUrgent: urgent.on, urgentReason: urgent.on ? urgent.reason : undefined,
       lines: resolved.filter((l) => l.itemId || l.qty).map((l) => ({ itemId: l.itemId, qty: Number(l.qty) }))
     };
     if (resolved.some((l) => l.search && !l.itemId)) { setError(new Error('Pick each item from the list (type to search).')); return; }
@@ -71,9 +79,16 @@ export function NewPurchaseRequestPage() {
   }
 
   return (
-    <Card title={editId ? `Resubmit ${existing.data?.number ?? ''}` : 'New Purchase Request'}
+    <Card title={editId ? `Resubmit ${existing.data?.number ?? ''}` : type?.name ?? 'New Purchase Request'}
       note="One request can list several items. You don't need to know the supplier or price — Procurement handles that after approval.">
       <form onSubmit={submit}>
+        {purchaseTypes.length > 1 && (
+          <Field label="Request type">
+            <select value={type?.id ?? ''} onChange={(e) => setRequestTypeId(e.target.value)}>
+              {purchaseTypes.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </Field>
+        )}
         <Field label={unit?.type === 'department' ? 'Department' : 'Store'} hint={unit ? (unit.type === 'store' ? 'Store request' : 'HQ department request') : undefined}>
           <select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!!editId || unitChoices.length <= 1}>
             {!unitId && <option value="">Choose…</option>}
@@ -108,10 +123,12 @@ export function NewPurchaseRequestPage() {
         <Field label="Purpose / comment (optional)">
           <input value={purpose} maxLength={500} onChange={(e) => setPurpose(e.target.value)} placeholder="Why this is needed, project name, or a note for Procurement" />
         </Field>
+        <UrgentField urgent={urgent.on} reason={urgent.reason} onChange={(on, reason) => setUrgent({ on, reason })}
+          note="Urgent requests go to the top of every approver's list and Procurement's queue. Under $100 is petty cash and is paid on the spot anyway." />
         {editId && existing.data?.estimatedTotal != null && <div className="sub" style={{ marginBottom: 10 }}>Previous estimated value: {money(existing.data.estimatedTotal)}</div>}
         <div className="flex gap-2 items-center flex-wrap">
           <button className="btn-primary" type="submit" disabled={busy || !items.data}>{busy ? 'Submitting…' : !items.data ? 'Loading catalog…' : editId ? 'Resubmit' : 'Submit request'}</button>
-          <Link to={editId ? `/requests/${editId}` : '/'} className="btn-ghost">Cancel</Link>
+          <Link to={editId ? `/requests/${editId}` : '/requests/new'} className="btn-ghost">Cancel</Link>
         </div>
         <div style={{ marginTop: 10 }}><ErrorText error={error} /></div>
       </form>

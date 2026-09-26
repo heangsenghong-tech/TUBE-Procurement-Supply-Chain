@@ -154,3 +154,27 @@ export function Letterhead({ title }: { title: string }) {
     </div>
   );
 }
+
+export function UrgentTag({ reason }: { reason?: string | null }) {
+  return <span className="tag tag-bad" title={reason ?? undefined} style={{ marginLeft: 6 }}>URGENT</span>;
+}
+
+// "This is urgent" + the reason, which approvers and Procurement see first.
+export function UrgentField({ urgent, reason, onChange, note }: {
+  urgent: boolean; reason: string; onChange: (urgent: boolean, reason: string) => void; note?: string;
+}) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <label className="flex gap-2 items-center" style={{ fontSize: 13.5, cursor: 'pointer' }}>
+        <input type="checkbox" checked={urgent} onChange={(e) => onChange(e.target.checked, reason)} />
+        This is urgent
+      </label>
+      {urgent && (
+        <div style={{ marginTop: 6 }}>
+          <input value={reason} maxLength={300} onChange={(e) => onChange(true, e.target.value)} placeholder="Why is it urgent? e.g. machine down, store can't serve" aria-label="Urgent reason" />
+          <div className="sub" style={{ marginTop: 4 }}>{note ?? 'Urgent requests go to the top of every approver\'s list and Procurement\'s queue. Please use it only when it really is.'}</div>
+        </div>
+      )}
+    </div>
+  );
+}
