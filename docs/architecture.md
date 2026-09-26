@@ -114,7 +114,7 @@ the requesting unit:
 use the same tiers on their estimated cost, except that below $100 they go to Procurement rather than
 petty cash. Store ownership doesn't change routing:
 KDT follows the Track B process but is tagged **company-owned** (Tube Cafe Co., Ltd. pays), while
-other stores are franchisee-billed. The named approvers are in `data/org/approvers.csv`, ready for
+other stores are franchisee-billed. HQ department heads and approvers are in `data/org/hq-people.csv`, ready for
 **Users & Stores → Bulk add people**.
 
 ### Roles (configurable)

@@ -1,12 +1,12 @@
-Code,Name,Type,Ownership,HOD Email,HOD Name,HOD Position,Sub-units
-MGT,CEO Office,department,,ceo@tubecafecambodia.com,SOU Monypich,CEO,
-OPS,Operation,department,,operationmanager@tubecafecambodia.com,CHEA Chanvantha,Head of Operation,Construction; Maintenance; R&D; QC; Event & Catering; Training; Stores
-MKT,Marketing,department,,,LIM Sreysros,Marketing Manager,Digital Marketing; Event; Creative & Design
-IT,IT,department,,,SOEM Sophatana,IT Officer,
-CX,Customer Experience,department,,,SARIN Sokharath,Customer Experience Manager,
-ADM,Admin & Legal,department,,,CHEA Vouchlee,Admin & Legal Officer,
-HR,Human Resource,department,,,THORM Monika,HR Supervisor,
-TA,Talent Acquisition,department,,,CHIV Muysoun,Talent Acquisition Supervisor,
-FIN,Finance,department,,finance@tubecafecambodia.com,TE Vengsrean,Head of Finance,Tax & Audit; Inventory & Fixed-Asset; Account Receivable; Account Payable; Cost Account
-BD,Business Development,department,,,NGANN Ravin,Business Development Manager,
-SCP,Supply Chain,department,,,PICH Pidor,Supply Chain Manager,Purchasing/Procurement; Warehouse
+Code,Name,Type,Ownership,HOD Email,HOD Name,HOD Position,HOD Phone,Sub-units
+MGT,CEO Office,department,,ceo@tubecafecambodia.com,SOU Monypich,CEO,+855 99 919 919,
+OPS,Operation,department,,operationmanager@tubecafecambodia.com,CHEA Chanvantha,Head of Operation,+855 10 304 391,Construction; Maintenance; R&D; QC; Event & Catering; Training; Stores; Franchise Operation
+MKT,Marketing,department,,marketing.manager@tubecafecambodia.com,LIM Sreysros,Marketing Manager,+855 17 263 311,Digital Marketing; Event & Activation; Creative & Design; Loyalty & E-commerce; Branding & Production
+IT,IT,department,,it@tubecafecambodia.com,SOEM Sophatana,IT Officer,+855 96 980 1732,
+CX,Customer Experience,department,,customercare@tubecafecambodia.com,SARIN Sokharath,Customer Experience Manager,+855 69 787 996,
+ADM,Admin & Legal,department,,,CHEA Vouchlee,Admin & Legal Officer,+855 86 995 196,
+HR,Human Resource,department,,monika.thorm@tubecafecambodia.com,THORM Monika,HR Supervisor,,
+TA,Talent Acquisition,department,,,CHIV Muysoun,Talent Acquisition Supervisor,+855 15 729 484,
+FIN,Finance,department,,finance@tubecafecambodia.com,TE Vengsrean,Head of Finance,+855 98 768 608,Tax & Audit; Inventory & Fixed-Asset; Account Receivable; Account Payable; Cost Account
+BD,Business Development,department,,bdm@tubecafecambodia.com,NGANN Ravin,Business Development Manager,+855 69 236 924,
+SCP,Supply Chain,department,,pidor456@gmail.com,PICH Pidor,Supply Chain Manager,+855 10 598 655,Purchasing/Procurement; Warehouse

@@ -46,7 +46,7 @@ describe('master data', () => {
   it('loaded the real stores (Track B) and HQ departments (Track A); KDT is company-owned', async () => {
     const units = await master.listOrgUnits(w.db);
     const real = units.filter((u) => u.code !== 'TK'); // TK is added by the test world
-    expect(real.filter((u) => u.type === 'store')).toHaveLength(79);
+    expect(real.filter((u) => u.type === 'store')).toHaveLength(80);
     expect(real.filter((u) => u.type === 'department').map((u) => u.code).sort())
       .toEqual(['ADM', 'BD', 'CX', 'FIN', 'HR', 'IT', 'MGT', 'MKT', 'OPS', 'SCP', 'TA']);
     expect(units.find((u) => u.code === 'KDT')!.ownership).toBe('franchiser');
