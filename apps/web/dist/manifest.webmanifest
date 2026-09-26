@@ -1,9 +1,0 @@
-{
-  "name": "Tube Procurement & Supply Chain",
-  "short_name": "Tube Procurement",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#F8F6F1",
-  "theme_color": "#FFCD00",
-  "icons": [{ "src": "/tube-logo.png", "sizes": "1182x1182", "type": "image/png", "purpose": "any" }]
-}
